@@ -1,0 +1,91 @@
+.draggable-card {
+  cursor: grab;
+  user-select: none;
+  position: relative;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.draggable-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.draggable-card--dragging {
+  cursor: grabbing;
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: none;
+}
+
+.draggable-card--selected {
+  box-shadow: 0 0 0 3px #007bff;
+  z-index: 100;
+}
+
+.draggable-card--invalid {
+  opacity: 0.7;
+}
+
+.draggable-card--invalid .draggable-card-overlay {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 2px dashed #dc3545;
+}
+
+.draggable-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 123, 255, 0.1);
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.draggable-card-status {
+  background-color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.draggable-card-status.valid {
+  color: #28a745;
+  border: 2px solid #28a745;
+}
+
+.draggable-card-status.invalid {
+  color: #dc3545;
+  border: 2px solid #dc3545;
+}
+
+/* Animation for smooth positioning */
+.draggable-card:not(.draggable-card--dragging) {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Disable text selection during drag */
+.draggable-card--dragging * {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Hover effects when not dragging */
+.draggable-card:not(.draggable-card--dragging):hover {
+  cursor: grab;
+}
+
+.draggable-card:not(.draggable-card--dragging):active {
+  cursor: grabbing;
+}

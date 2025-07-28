@@ -1,0 +1,94 @@
+.landmark-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.landmark-form-errors {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.landmark-form-error {
+  color: #c53030;
+  font-size: 0.875rem;
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+}
+
+.landmark-form-error::before {
+  content: '⚠';
+  margin-right: 8px;
+  font-size: 1rem;
+}
+
+.landmark-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.landmark-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .landmark-form {
+    max-height: 80vh;
+  }
+  
+  .landmark-form-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  
+  .landmark-form-actions button {
+    width: 100%;
+  }
+}
+
+/* Focus management for form accessibility */
+.landmark-form input:focus,
+.landmark-form select:focus,
+.landmark-form textarea:focus {
+  outline: 2px solid #3182ce;
+  outline-offset: 2px;
+}
+
+/* Loading state styles */
+.landmark-form--submitting {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.landmark-form--submitting .landmark-form-fields {
+  filter: blur(1px);
+}
+
+/* Animation for error messages */
+.landmark-form-errors {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

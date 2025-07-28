@@ -1,0 +1,50 @@
+.delve-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.delve-form-errors {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.delve-form-error {
+  color: #c53030;
+  font-size: 0.875rem;
+  margin: 2px 0;
+}
+
+.delve-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.delve-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .delve-form {
+    max-width: 100%;
+  }
+
+  .delve-form-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .delve-form-actions button {
+    width: 100%;
+  }
+}

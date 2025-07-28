@@ -1,0 +1,167 @@
+.delve-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.delve-card:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.delve-card--editing {
+  border-color: #3182ce;
+  background: #f7fafc;
+}
+
+.delve-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.delve-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+  word-break: break-word;
+}
+
+.delve-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.delve-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delve-card-errors {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.delve-card-error {
+  color: #c53030;
+  font-size: 0.875rem;
+  margin: 2px 0;
+}
+
+.delve-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delve-card-field-label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.delve-card-resistance {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.delve-card-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.delve-card-domain-chip {
+  background: #edf2f7;
+  color: #4a5568;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.delve-card-list {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.delve-card-list-item {
+  margin: 2px 0;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.delve-card-monsters {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.delve-card-monsters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.delve-card-monsters-title {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.delve-card-monsters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+
+.delve-card-empty-state {
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.875rem;
+  padding: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .delve-card {
+    min-width: 280px;
+    max-width: 100%;
+    margin: 4px;
+    padding: 12px;
+  }
+
+  .delve-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .delve-card-actions {
+    justify-content: flex-end;
+  }
+
+
+}

@@ -1,0 +1,155 @@
+.landmark-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.landmark-card:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.landmark-card--editing {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+.landmark-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.landmark-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.landmark-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.landmark-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.landmark-card-errors {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.landmark-card-error {
+  color: #c53030;
+  font-size: 0.875rem;
+  margin: 2px 0;
+}
+
+.landmark-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.landmark-card-field-label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.landmark-card-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.landmark-card-domain-chip {
+  background: #edf2f7;
+  color: #4a5568;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+}
+
+.landmark-card-stress-die {
+  background: #f7fafc;
+  color: #2d3748;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+}
+
+.landmark-card-list {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.landmark-card-list-item {
+  color: #4a5568;
+  font-size: 0.875rem;
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .landmark-card {
+    min-width: 280px;
+    max-width: 100%;
+  }
+  
+  .landmark-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .landmark-card-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* Focus styles for accessibility */
+.landmark-card:focus-within {
+  outline: 2px solid #3182ce;
+  outline-offset: 2px;
+}
+
+/* Animation for editing state */
+.landmark-card--editing .landmark-card-content {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

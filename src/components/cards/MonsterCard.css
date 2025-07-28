@@ -1,0 +1,140 @@
+.monster-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s ease;
+}
+
+.monster-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.monster-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.monster-card-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+}
+
+.monster-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.monster-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.monster-card-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.monster-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.monster-card-stat-label {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.monster-card-stat-value {
+  font-weight: 600;
+  color: #495057;
+}
+
+.monster-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.monster-card-field-label {
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.monster-card-list {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.monster-card-list-item {
+  margin-bottom: 2px;
+  color: #495057;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.monster-card-notes {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #495057;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.monster-card-notes-line {
+  margin: 0;
+  margin-bottom: 4px;
+}
+
+.monster-card-notes-line:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .monster-card {
+    padding: 12px;
+  }
+  
+  .monster-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .monster-card-actions {
+    justify-content: flex-end;
+  }
+  
+  .monster-card-stats {
+    gap: 8px;
+  }
+  
+  .monster-card-stat {
+    flex: 1;
+    min-width: 120px;
+  }
+}
