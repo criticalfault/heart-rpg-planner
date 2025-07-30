@@ -44,18 +44,61 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .landmark-form {
+    max-height: 75vh;
+    gap: 18px;
+  }
+}
+
 @media (max-width: 768px) {
   .landmark-form {
     max-height: 80vh;
+    gap: 16px;
+  }
+  
+  .landmark-form-fields {
+    gap: 14px;
   }
   
   .landmark-form-actions {
     flex-direction: column-reverse;
     gap: 8px;
+    padding-top: 12px;
   }
   
   .landmark-form-actions button {
     width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landmark-form {
+    max-height: 85vh;
+    gap: 14px;
+  }
+
+  .landmark-form-fields {
+    gap: 12px;
+  }
+
+  .landmark-form-actions {
+    padding-top: 10px;
+    gap: 6px;
+  }
+
+  .landmark-form-actions button {
+    min-height: 48px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .landmark-form-actions button {
+    min-height: 48px;
+    padding: 12px 16px;
   }
 }
 

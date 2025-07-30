@@ -86,7 +86,11 @@ export interface DelveMapState {
   selectedCard: string | null;
   editingCard: string | null;
   draggedCard: string | null;
+  showConnections: boolean;
+  gridVisible: boolean;
   library: Library;
+  error: string | null;
+  loading: boolean;
 }
 
 export interface UIState {

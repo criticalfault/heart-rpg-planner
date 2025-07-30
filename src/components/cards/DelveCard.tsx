@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { Delve } from '../../types';
 import { Button } from '../common/Button';
 import { DomainSelector } from '../common/DomainSelector';
@@ -6,7 +6,9 @@ import { ArrayEditor } from '../common/ArrayEditor';
 import { Input } from '../common/Input';
 import { validateDelve } from '../../types/validators';
 import { MonsterCard } from './MonsterCard';
+import { usePerformanceOptimization } from '../../hooks/usePerformanceOptimization';
 import './DelveCard.css';
+import '../../styles/animations.css';
 
 export interface DelveCardProps {
   delve: Delve;
@@ -21,7 +23,7 @@ export interface DelveCardProps {
   className?: string;
 }
 
-export const DelveCard: React.FC<DelveCardProps> = ({
+const DelveCardComponent: React.FC<DelveCardProps> = ({
   delve,
   onUpdate,
   onDelete,
@@ -35,20 +37,26 @@ export const DelveCard: React.FC<DelveCardProps> = ({
 }) => {
   const [editData, setEditData] = useState<Delve>(delve);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // Performance optimization hook
+  const { performanceSettings, throttledUpdate } = usePerformanceOptimization({
+    enableAnimations: true,
+    maxVisibleItems: delve.monsters.length
+  });
 
-  const handleStartEdit = () => {
+  const handleStartEdit = useCallback(() => {
     setEditData(delve);
     setValidationErrors([]);
     onEditToggle?.(true);
-  };
+  }, [delve, onEditToggle]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditData(delve);
     setValidationErrors([]);
     onEditToggle?.(false);
-  };
+  }, [delve, onEditToggle]);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     const errors = validateDelve(editData);
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -58,27 +66,68 @@ export const DelveCard: React.FC<DelveCardProps> = ({
     setValidationErrors([]);
     onUpdate?.(editData);
     onEditToggle?.(false);
-  };
+  }, [editData, onUpdate, onEditToggle]);
 
-  const handleFieldChange = (field: keyof Delve, value: any) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const handleFieldChange = useCallback((field: keyof Delve, value: any) => {
+    throttledUpdate(() => {
+      setEditData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    });
+  }, [throttledUpdate]);
 
-  const handleResistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResistanceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
       handleFieldChange('resistance', value);
     }
-  };
+  }, [handleFieldChange]);
 
-  const cardClasses = [
+  // Memoize CSS classes and monster rendering for performance
+  const cardClasses = useMemo(() => [
     'delve-card',
+    performanceSettings.enableAnimations ? 'card-transition' : '',
+    'hover-lift',
+    'focus-ring',
+    'gpu-accelerated',
     isEditing ? 'delve-card--editing' : '',
     className
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean).join(' '), [performanceSettings.enableAnimations, isEditing, className]);
+
+  // Memoize monster cards to prevent unnecessary re-renders
+  const memoizedMonsterCards = useMemo(() => {
+    if (!performanceSettings.shouldOptimize || delve.monsters.length <= performanceSettings.maxVisibleItems) {
+      return delve.monsters.map((monster) => (
+        <MonsterCard
+          key={monster.id}
+          monster={monster}
+          onEdit={onEditMonster ? () => onEditMonster(delve.id, monster.id) : undefined}
+          onDelete={onDeleteMonster ? () => onDeleteMonster(delve.id, monster.id) : undefined}
+        />
+      ));
+    }
+    
+    // For large numbers of monsters, show only the first few with a "show more" option
+    const visibleMonsters = delve.monsters.slice(0, performanceSettings.maxVisibleItems);
+    const remainingCount = delve.monsters.length - performanceSettings.maxVisibleItems;
+    
+    return [
+      ...visibleMonsters.map((monster) => (
+        <MonsterCard
+          key={monster.id}
+          monster={monster}
+          onEdit={onEditMonster ? () => onEditMonster(delve.id, monster.id) : undefined}
+          onDelete={onDeleteMonster ? () => onDeleteMonster(delve.id, monster.id) : undefined}
+        />
+      )),
+      remainingCount > 0 && (
+        <div key="show-more" className="delve-card-show-more">
+          +{remainingCount} more monsters
+        </div>
+      )
+    ].filter(Boolean);
+  }, [delve.monsters, delve.id, onEditMonster, onDeleteMonster, performanceSettings]);
 
   if (isEditing) {
     return (
@@ -162,7 +211,12 @@ export const DelveCard: React.FC<DelveCardProps> = ({
   }
 
   return (
-    <div className={cardClasses}>
+    <div 
+      className={cardClasses}
+      role="article"
+      aria-label={`Delve: ${delve.name}, Resistance: ${delve.resistance}`}
+      tabIndex={0}
+    >
       <div className="delve-card-header">
         <h3 className="delve-card-title">{delve.name}</h3>
         <div className="delve-card-actions">
@@ -253,14 +307,7 @@ export const DelveCard: React.FC<DelveCardProps> = ({
 
           {delve.monsters.length > 0 ? (
             <div className="delve-card-monsters-list">
-              {delve.monsters.map((monster) => (
-                <MonsterCard
-                  key={monster.id}
-                  monster={monster}
-                  onEdit={onEditMonster ? () => onEditMonster(delve.id, monster.id) : undefined}
-                  onDelete={onDeleteMonster ? () => onDeleteMonster(delve.id, monster.id) : undefined}
-                />
-              ))}
+              {memoizedMonsterCards}
             </div>
           ) : (
             <div className="delve-card-empty-state">
@@ -272,4 +319,23 @@ export const DelveCard: React.FC<DelveCardProps> = ({
     </div>
   );
 };
+
+// Memoized component with custom comparison function for better performance
+export const DelveCard = memo(DelveCardComponent, (prevProps, nextProps) => {
+  // Compare delve data
+  if (prevProps.delve.id !== nextProps.delve.id) return false;
+  if (prevProps.delve.name !== nextProps.delve.name) return false;
+  if (prevProps.delve.resistance !== nextProps.delve.resistance) return false;
+  if (JSON.stringify(prevProps.delve.domains) !== JSON.stringify(nextProps.delve.domains)) return false;
+  if (JSON.stringify(prevProps.delve.events) !== JSON.stringify(nextProps.delve.events)) return false;
+  if (JSON.stringify(prevProps.delve.resources) !== JSON.stringify(nextProps.delve.resources)) return false;
+  if (JSON.stringify(prevProps.delve.monsters) !== JSON.stringify(nextProps.delve.monsters)) return false;
+  
+  // Compare other props
+  if (prevProps.isEditing !== nextProps.isEditing) return false;
+  if (prevProps.className !== nextProps.className) return false;
+  
+  // Function props are assumed to be stable (using useCallback in parent)
+  return true;
+});
 

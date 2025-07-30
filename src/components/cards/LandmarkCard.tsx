@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { Landmark } from '../../types';
 import { Button } from '../common/Button';
 import { DomainSelector } from '../common/DomainSelector';
@@ -6,7 +6,9 @@ import { ArrayEditor } from '../common/ArrayEditor';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
 import { validateLandmark, VALID_STRESS_DICE } from '../../types/validators';
+import { usePerformanceOptimization } from '../../hooks/usePerformanceOptimization';
 import './LandmarkCard.css';
+import '../../styles/animations.css';
 
 export interface LandmarkCardProps {
   landmark: Landmark;
@@ -18,7 +20,7 @@ export interface LandmarkCardProps {
   className?: string;
 }
 
-export const LandmarkCard: React.FC<LandmarkCardProps> = ({
+const LandmarkCardComponent: React.FC<LandmarkCardProps> = ({
   landmark,
   onUpdate,
   onDelete,
@@ -29,20 +31,26 @@ export const LandmarkCard: React.FC<LandmarkCardProps> = ({
 }) => {
   const [editData, setEditData] = useState<Landmark>(landmark);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // Performance optimization hook
+  const { performanceSettings, throttledUpdate } = usePerformanceOptimization({
+    enableAnimations: true,
+    maxVisibleItems: 50
+  });
 
-  const handleStartEdit = () => {
+  const handleStartEdit = useCallback(() => {
     setEditData(landmark);
     setValidationErrors([]);
     onEditToggle?.(true);
-  };
+  }, [landmark, onEditToggle]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditData(landmark);
     setValidationErrors([]);
     onEditToggle?.(false);
-  };
+  }, [landmark, onEditToggle]);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     const errors = validateLandmark(editData);
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -52,25 +60,35 @@ export const LandmarkCard: React.FC<LandmarkCardProps> = ({
     setValidationErrors([]);
     onUpdate?.(editData);
     onEditToggle?.(false);
-  };
+  }, [editData, onUpdate, onEditToggle]);
 
-  const handleFieldChange = (field: keyof Landmark, value: any) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const handleFieldChange = useCallback((field: keyof Landmark, value: any) => {
+    throttledUpdate(() => {
+      setEditData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    });
+  }, [throttledUpdate]);
 
-  const stressDieOptions = VALID_STRESS_DICE.map(die => ({
-    value: die,
-    label: die
-  }));
+  // Memoize expensive computations
+  const stressDieOptions = useMemo(() => 
+    VALID_STRESS_DICE.map(die => ({
+      value: die,
+      label: die
+    })), []
+  );
 
-  const cardClasses = [
+  // Memoize CSS classes to prevent unnecessary recalculations
+  const cardClasses = useMemo(() => [
     'landmark-card',
+    performanceSettings.enableAnimations ? 'card-transition' : '',
+    'hover-lift',
+    'focus-ring',
+    'gpu-accelerated',
     isEditing ? 'landmark-card--editing' : '',
     className
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean).join(' '), [performanceSettings.enableAnimations, isEditing, className]);
 
   if (isEditing) {
     return (
@@ -151,7 +169,12 @@ export const LandmarkCard: React.FC<LandmarkCardProps> = ({
   }
 
   return (
-    <div className={cardClasses}>
+    <div 
+      className={cardClasses}
+      role="article"
+      aria-label={`Landmark: ${landmark.name}`}
+      tabIndex={0}
+    >
       <div className="landmark-card-header">
         <h3 className="landmark-card-title">{landmark.name}</h3>
         <div className="landmark-card-actions">
@@ -227,3 +250,21 @@ export const LandmarkCard: React.FC<LandmarkCardProps> = ({
     </div>
   );
 };
+
+// Memoized component with custom comparison function for better performance
+export const LandmarkCard = memo(LandmarkCardComponent, (prevProps, nextProps) => {
+  // Compare landmark data
+  if (prevProps.landmark.id !== nextProps.landmark.id) return false;
+  if (prevProps.landmark.name !== nextProps.landmark.name) return false;
+  if (prevProps.landmark.defaultStress !== nextProps.landmark.defaultStress) return false;
+  if (JSON.stringify(prevProps.landmark.domains) !== JSON.stringify(nextProps.landmark.domains)) return false;
+  if (JSON.stringify(prevProps.landmark.haunts) !== JSON.stringify(nextProps.landmark.haunts)) return false;
+  if (JSON.stringify(prevProps.landmark.bonds) !== JSON.stringify(nextProps.landmark.bonds)) return false;
+  
+  // Compare other props
+  if (prevProps.isEditing !== nextProps.isEditing) return false;
+  if (prevProps.className !== nextProps.className) return false;
+  
+  // Function props are assumed to be stable (using useCallback in parent)
+  return true;
+});

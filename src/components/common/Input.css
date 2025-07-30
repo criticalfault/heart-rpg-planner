@@ -19,6 +19,7 @@
   line-height: 1.5rem;
   background-color: white;
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  min-height: 40px;
 }
 
 .input:focus {
@@ -52,4 +53,39 @@
   font-size: 0.875rem;
   color: #6b7280;
   margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .input {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    min-height: 44px;
+  }
+
+  .input-label {
+    font-size: 0.8rem;
+  }
+
+  .input-error,
+  .input-helper {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .input {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    min-height: 48px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .input {
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }

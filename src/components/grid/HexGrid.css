@@ -4,6 +4,8 @@
   background-color: #fafafa;
   border: 1px solid #e0e0e0;
   user-select: none;
+  /* Enable smooth scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
 }
 
 .hex-grid-canvas {
@@ -83,4 +85,57 @@
 
 .hex-snap-indicator.visible {
   opacity: 1;
+}
+
+/* Responsive hex grid */
+@media (max-width: 768px) {
+  .hex-grid-controls {
+    top: 5px;
+    right: 5px;
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .hex-grid-toggle {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-height: 32px;
+  }
+
+  .hex-snap-indicator {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hex-grid-controls {
+    position: relative;
+    top: auto;
+    right: auto;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .hex-grid-toggle {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .hex-grid-canvas {
+    cursor: default;
+    touch-action: pan-x pan-y;
+  }
+
+  .hex-grid-toggle {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
 }

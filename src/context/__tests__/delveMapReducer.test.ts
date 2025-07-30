@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { delveMapReducer } from '../delveMapReducer';
-import { initialState } from '../DelveMapContext';
+import { createInitialState } from '../DelveMapContext';
 import { Landmark, Delve, Monster, Connection, PlacedCard } from '../../types';
+
+// Create a helper to get fresh initial state for each test
+const getInitialState = () => createInitialState();
 
 describe('delveMapReducer', () => {
   describe('Landmark actions', () => {
@@ -16,7 +19,7 @@ describe('delveMapReducer', () => {
 
     it('should add a landmark', () => {
       const action = { type: 'ADD_LANDMARK' as const, payload: mockLandmark };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.landmarks).toHaveLength(1);
       expect(newState.landmarks[0]).toEqual(mockLandmark);
@@ -24,7 +27,7 @@ describe('delveMapReducer', () => {
 
     it('should update a landmark', () => {
       const stateWithLandmark = {
-        ...initialState,
+        ...getInitialState(),
         landmarks: [mockLandmark]
       };
 
@@ -54,7 +57,7 @@ describe('delveMapReducer', () => {
       };
 
       const stateWithData = {
-        ...initialState,
+        ...getInitialState(),
         landmarks: [mockLandmark],
         placedCards: [placedCard],
         connections: [connection]
@@ -82,7 +85,7 @@ describe('delveMapReducer', () => {
 
     it('should add a delve', () => {
       const action = { type: 'ADD_DELVE' as const, payload: mockDelve };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.delves).toHaveLength(1);
       expect(newState.delves[0]).toEqual(mockDelve);
@@ -90,7 +93,7 @@ describe('delveMapReducer', () => {
 
     it('should update a delve', () => {
       const stateWithDelve = {
-        ...initialState,
+        ...getInitialState(),
         delves: [mockDelve]
       };
 
@@ -120,7 +123,7 @@ describe('delveMapReducer', () => {
       };
 
       const stateWithData = {
-        ...initialState,
+        ...getInitialState(),
         delves: [mockDelve],
         placedCards: [placedCard],
         connections: [connection]
@@ -158,7 +161,7 @@ describe('delveMapReducer', () => {
 
     it('should add a monster to a delve', () => {
       const stateWithDelve = {
-        ...initialState,
+        ...getInitialState(),
         delves: [mockDelve]
       };
 
@@ -180,7 +183,7 @@ describe('delveMapReducer', () => {
       };
 
       const stateWithData = {
-        ...initialState,
+        ...getInitialState(),
         delves: [delveWithMonster]
       };
 
@@ -206,7 +209,7 @@ describe('delveMapReducer', () => {
       };
 
       const stateWithData = {
-        ...initialState,
+        ...getInitialState(),
         delves: [delveWithMonster]
       };
 
@@ -231,7 +234,7 @@ describe('delveMapReducer', () => {
 
     it('should add a connection', () => {
       const action = { type: 'ADD_CONNECTION' as const, payload: mockConnection };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.connections).toHaveLength(1);
       expect(newState.connections[0]).toEqual(mockConnection);
@@ -239,7 +242,7 @@ describe('delveMapReducer', () => {
 
     it('should update a connection', () => {
       const stateWithConnection = {
-        ...initialState,
+        ...getInitialState(),
         connections: [mockConnection]
       };
 
@@ -256,7 +259,7 @@ describe('delveMapReducer', () => {
 
     it('should delete a connection', () => {
       const stateWithConnection = {
-        ...initialState,
+        ...getInitialState(),
         connections: [mockConnection]
       };
 
@@ -276,7 +279,7 @@ describe('delveMapReducer', () => {
 
     it('should place a card', () => {
       const action = { type: 'PLACE_CARD' as const, payload: mockPlacedCard };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.placedCards).toHaveLength(1);
       expect(newState.placedCards[0]).toEqual(mockPlacedCard);
@@ -284,7 +287,7 @@ describe('delveMapReducer', () => {
 
     it('should replace existing card when placing with same id', () => {
       const stateWithCard = {
-        ...initialState,
+        ...getInitialState(),
         placedCards: [mockPlacedCard]
       };
 
@@ -302,7 +305,7 @@ describe('delveMapReducer', () => {
 
     it('should move a card', () => {
       const stateWithCard = {
-        ...initialState,
+        ...getInitialState(),
         placedCards: [mockPlacedCard]
       };
 
@@ -318,7 +321,7 @@ describe('delveMapReducer', () => {
 
     it('should remove a placed card', () => {
       const stateWithCard = {
-        ...initialState,
+        ...getInitialState(),
         placedCards: [mockPlacedCard]
       };
 
@@ -332,21 +335,21 @@ describe('delveMapReducer', () => {
   describe('Drag and drop actions', () => {
     it('should set dragged card', () => {
       const action = { type: 'SET_DRAGGED_CARD' as const, payload: 'card-1' };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.draggedCard).toBe('card-1');
     });
 
     it('should set selected card', () => {
       const action = { type: 'SET_SELECTED_CARD' as const, payload: 'card-1' };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.selectedCard).toBe('card-1');
     });
 
     it('should set editing card', () => {
       const action = { type: 'SET_EDITING_CARD' as const, payload: 'card-1' };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.editingCard).toBe('card-1');
     });
@@ -387,7 +390,7 @@ describe('delveMapReducer', () => {
         type: 'ADD_TO_LIBRARY' as const,
         payload: { type: 'landmark' as const, item: mockLandmark }
       };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.library.landmarks).toHaveLength(1);
       expect(newState.library.landmarks[0]).toEqual(mockLandmark);
@@ -398,7 +401,7 @@ describe('delveMapReducer', () => {
         type: 'ADD_TO_LIBRARY' as const,
         payload: { type: 'delve' as const, item: mockDelve }
       };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.library.delves).toHaveLength(1);
       expect(newState.library.delves[0]).toEqual(mockDelve);
@@ -409,13 +412,14 @@ describe('delveMapReducer', () => {
         type: 'ADD_TO_LIBRARY' as const,
         payload: { type: 'monster' as const, item: mockMonster }
       };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.library.monsters).toHaveLength(1);
       expect(newState.library.monsters[0]).toEqual(mockMonster);
     });
 
     it('should update library landmark', () => {
+      const initialState = getInitialState();
       const stateWithLibrary = {
         ...initialState,
         library: {
@@ -440,7 +444,7 @@ describe('delveMapReducer', () => {
 
     it('should delete from library', () => {
       const stateWithLibrary = {
-        ...initialState,
+        ...getInitialState(),
         library: {
           landmarks: [mockLandmark],
           delves: [mockDelve],
@@ -507,7 +511,7 @@ describe('delveMapReducer', () => {
 
     it('should load a map', () => {
       const action = { type: 'LOAD_MAP' as const, payload: mockMap };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.currentMap).toEqual(mockMap);
       expect(newState.landmarks).toEqual(mockMap.landmarks);
@@ -518,7 +522,7 @@ describe('delveMapReducer', () => {
 
     it('should create a new map', () => {
       const action = { type: 'CREATE_NEW_MAP' as const, payload: { name: 'New Map' } };
-      const newState = delveMapReducer(initialState, action);
+      const newState = delveMapReducer(getInitialState(), action);
 
       expect(newState.currentMap).toBeDefined();
       expect(newState.currentMap?.name).toBe('New Map');
@@ -530,7 +534,7 @@ describe('delveMapReducer', () => {
 
     it('should clear the map', () => {
       const stateWithData = {
-        ...initialState,
+        ...getInitialState(),
         currentMap: mockMap,
         landmarks: mockMap.landmarks,
         delves: mockMap.delves,
@@ -557,6 +561,7 @@ describe('delveMapReducer', () => {
 
   describe('Unknown action', () => {
     it('should return current state for unknown action', () => {
+      const initialState = getInitialState();
       const unknownAction = { type: 'UNKNOWN_ACTION' as any };
       const newState = delveMapReducer(initialState, unknownAction);
 

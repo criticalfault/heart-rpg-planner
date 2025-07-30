@@ -1,0 +1,79 @@
+.connection-line-group {
+  pointer-events: all;
+}
+
+.connection-line {
+  cursor: pointer;
+  transition: stroke-width 0.2s ease, opacity 0.2s ease;
+  stroke-width: 3;
+  opacity: 0.7;
+}
+
+.connection-line:hover {
+  stroke-width: 4;
+  opacity: 1;
+}
+
+.connection-line--selected {
+  stroke-width: 4;
+  opacity: 1;
+}
+
+/* Connection type styles */
+.connection-line--landmark-to-delve {
+  stroke: #4f46e5; /* Indigo for landmark to delve */
+}
+
+.connection-line--delve-to-delve {
+  stroke: #dc2626; /* Red for delve to delve */
+}
+
+.connection-line--landmark-to-landmark {
+  stroke: #059669; /* Green for landmark to landmark */
+  stroke-dasharray: 5,5;
+}
+
+.connection-arrow {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.connection-arrow.connection-line--landmark-to-delve {
+  fill: #4f46e5;
+}
+
+.connection-arrow.connection-line--delve-to-delve {
+  fill: #dc2626;
+}
+
+.connection-arrow.connection-line--landmark-to-landmark {
+  fill: #059669;
+}
+
+.connection-delete-button {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.connection-line-group:hover .connection-delete-button,
+.connection-line--selected ~ .connection-delete-button {
+  opacity: 1;
+}
+
+.connection-delete-bg {
+  cursor: pointer;
+  transition: fill 0.2s ease;
+}
+
+.connection-delete-bg:hover {
+  fill: #fee2e2; /* Light red background on hover */
+}
+
+.connection-delete-text {
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.connection-delete-text:hover {
+  fill: #dc2626; /* Red text on hover */
+}

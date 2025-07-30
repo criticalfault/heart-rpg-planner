@@ -1,7 +1,8 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, memo } from 'react';
 import { HexPosition } from '../../types';
 import { hexToPixel, snapToHex, HexGridConfig, DEFAULT_HEX_CONFIG, PixelPosition } from '../../utils/hexUtils';
 import './DraggableCard.css';
+import '../../styles/animations.css';
 
 export interface DragPreviewData {
   cardId: string;
@@ -24,7 +25,7 @@ export interface DraggableCardProps {
   className?: string;
 }
 
-export const DraggableCard: React.FC<DraggableCardProps> = ({
+const DraggableCardComponent: React.FC<DraggableCardProps> = ({
   cardId,
   cardType,
   position,
@@ -42,6 +43,8 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   const [dragOffset, setDragOffset] = useState<PixelPosition>({ x: 0, y: 0 });
   const [dragPosition, setDragPosition] = useState<PixelPosition | null>(null);
   const [previewPosition, setPreviewPosition] = useState<HexPosition | null>(null);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const [touchStartPosition, setTouchStartPosition] = useState<PixelPosition | null>(null);
 
   // Calculate pixel position from hex position
   const pixelPosition = position ? hexToPixel(position, hexConfig) : null;
@@ -101,6 +104,80 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
     }
   }, [cardId, previewPosition, isOccupied, onDragEnd]);
 
+  // Touch event handlers for mobile support
+  const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    if (!cardRef.current || !pixelPosition) return;
+
+    const touch = event.touches[0];
+    const rect = cardRef.current.getBoundingClientRect();
+    const containerRect = cardRef.current.offsetParent?.getBoundingClientRect();
+    
+    if (!containerRect) return;
+
+    // Calculate offset from touch to card center
+    const offset = {
+      x: touch.clientX - (rect.left + rect.width / 2),
+      y: touch.clientY - (rect.top + rect.height / 2),
+    };
+
+    setDragOffset(offset);
+    setTouchStartPosition({ x: touch.clientX, y: touch.clientY });
+    setIsTouchDragging(false);
+
+    // Prevent default to avoid scrolling
+    event.preventDefault();
+  }, [pixelPosition]);
+
+  const handleTouchMove = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchStartPosition || !cardRef.current) return;
+
+    const touch = event.touches[0];
+    const containerRect = cardRef.current.offsetParent?.getBoundingClientRect();
+    if (!containerRect) return;
+
+    // Check if we've moved enough to start dragging
+    const deltaX = Math.abs(touch.clientX - touchStartPosition.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPosition.y);
+    const dragThreshold = 10;
+
+    if (!isTouchDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
+      setIsTouchDragging(true);
+      onDragStart?.(cardId, cardType);
+    }
+
+    if (isTouchDragging) {
+      // Calculate position relative to container
+      const containerPosition = {
+        x: touch.clientX - containerRect.left - dragOffset.x,
+        y: touch.clientY - containerRect.top - dragOffset.y,
+      };
+
+      setDragPosition(containerPosition);
+
+      // Calculate preview hex position
+      const { hex } = snapToHex(containerPosition, hexConfig);
+      setPreviewPosition(hex);
+      onDragMove?.(cardId, hex);
+
+      // Prevent scrolling
+      event.preventDefault();
+    }
+  }, [touchStartPosition, isTouchDragging, cardId, cardType, dragOffset, hexConfig, onDragStart, onDragMove]);
+
+  const handleTouchEnd = useCallback((_event: React.TouchEvent<HTMLDivElement>) => {
+    if (isTouchDragging) {
+      // If we have a preview position and it's not occupied, use it
+      if (previewPosition && (!isOccupied || !isOccupied(previewPosition, cardId))) {
+        onDragEnd?.(cardId, previewPosition);
+      }
+    }
+
+    setDragPosition(null);
+    setPreviewPosition(null);
+    setIsTouchDragging(false);
+    setTouchStartPosition(null);
+  }, [isTouchDragging, previewPosition, cardId, isOccupied, onDragEnd]);
+
   // Handle drag over (for visual feedback)
   const handleDrag = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     if (event.clientX === 0 && event.clientY === 0) return; // Ignore final drag event
@@ -123,7 +200,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   }, [cardId, dragOffset, hexConfig, onDragMove]);
 
   // Determine final position for rendering
-  const renderPosition = isDragging && dragPosition ? dragPosition : pixelPosition;
+  const renderPosition = (isDragging || isTouchDragging) && dragPosition ? dragPosition : pixelPosition;
 
   // Determine if current preview position is valid
   const isValidPosition = previewPosition ? 
@@ -132,9 +209,10 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
   // Build CSS classes
   const cardClasses = [
     'draggable-card',
-    isDragging ? 'draggable-card--dragging' : '',
-    isSelected ? 'draggable-card--selected' : '',
-    isDragging && !isValidPosition ? 'draggable-card--invalid' : '',
+    'transition-transform',
+    (isDragging || isTouchDragging) ? 'draggable-card--dragging' : '',
+    isSelected ? 'draggable-card--selected animate-glow' : '',
+    (isDragging || isTouchDragging) && !isValidPosition ? 'draggable-card--invalid animate-shake' : '',
     className
   ].filter(Boolean).join(' ');
 
@@ -143,8 +221,8 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
     position: 'absolute',
     transform: renderPosition ? `translate(${renderPosition.x}px, ${renderPosition.y}px)` : undefined,
     transformOrigin: 'center center',
-    zIndex: isDragging ? 1000 : isSelected ? 100 : 1,
-    transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+    zIndex: (isDragging || isTouchDragging) ? 1000 : isSelected ? 100 : 1,
+    transition: (isDragging || isTouchDragging) ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   };
 
   return (
@@ -156,13 +234,16 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       data-card-id={cardId}
       data-card-type={cardType}
     >
       {children}
       
       {/* Visual feedback for drag state */}
-      {isDragging && (
+      {(isDragging || isTouchDragging) && (
         <div className="draggable-card-overlay">
           <div className={`draggable-card-status ${isValidPosition ? 'valid' : 'invalid'}`}>
             {isValidPosition ? '✓' : '✗'}
@@ -172,5 +253,25 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
     </div>
   );
 };
+
+// Memoized component with custom comparison function for better performance
+export const DraggableCard = memo(DraggableCardComponent, (prevProps, nextProps) => {
+  // Compare position
+  if (prevProps.position?.q !== nextProps.position?.q) return false;
+  if (prevProps.position?.r !== nextProps.position?.r) return false;
+  
+  // Compare other props that affect rendering
+  if (prevProps.cardId !== nextProps.cardId) return false;
+  if (prevProps.cardType !== nextProps.cardType) return false;
+  if (prevProps.isDragging !== nextProps.isDragging) return false;
+  if (prevProps.isSelected !== nextProps.isSelected) return false;
+  if (prevProps.className !== nextProps.className) return false;
+  
+  // Compare hex config (shallow comparison of key properties)
+  if (prevProps.hexConfig?.hexSize !== nextProps.hexConfig?.hexSize) return false;
+  
+  // Function props and children are assumed to be stable
+  return true;
+});
 
 export default DraggableCard;

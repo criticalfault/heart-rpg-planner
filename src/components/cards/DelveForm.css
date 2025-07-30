@@ -34,17 +34,58 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .delve-form {
     max-width: 100%;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .delve-form {
+    gap: 12px;
+  }
+
+  .delve-form-fields {
+    gap: 14px;
   }
 
   .delve-form-actions {
     flex-direction: column-reverse;
     gap: 8px;
+    padding-top: 12px;
   }
 
   .delve-form-actions button {
     width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .delve-form {
+    gap: 10px;
+  }
+
+  .delve-form-fields {
+    gap: 12px;
+  }
+
+  .delve-form-actions {
+    padding-top: 10px;
+    gap: 6px;
+  }
+
+  .delve-form-actions button {
+    min-height: 48px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .delve-form-actions button {
+    min-height: 48px;
+    padding: 12px 16px;
   }
 }

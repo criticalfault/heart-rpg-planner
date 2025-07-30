@@ -3,6 +3,9 @@
   user-select: none;
   position: relative;
   transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  /* Ensure minimum touch target size */
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .draggable-card:hover {
@@ -88,4 +91,66 @@
 
 .draggable-card:not(.draggable-card--dragging):active {
   cursor: grabbing;
+}
+
+/* Responsive and touch-friendly adjustments */
+@media (max-width: 768px) {
+  .draggable-card {
+    /* Slightly larger touch targets on mobile */
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  .draggable-card:hover {
+    /* Reduce hover scale on smaller screens */
+    transform: scale(1.01);
+  }
+
+  .draggable-card--dragging {
+    /* Less dramatic rotation on mobile */
+    transform: scale(1.03) rotate(1deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .draggable-card {
+    min-height: 52px;
+    min-width: 52px;
+  }
+
+  .draggable-card--dragging {
+    /* Minimal effects on small screens */
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Touch-specific interactions */
+@media (hover: none) and (pointer: coarse) {
+  .draggable-card {
+    cursor: default;
+    /* Larger touch targets */
+    min-height: 56px;
+    min-width: 56px;
+  }
+
+  .draggable-card:hover {
+    /* Disable hover effects on touch devices */
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .draggable-card:not(.draggable-card--dragging):hover {
+    cursor: default;
+  }
+
+  .draggable-card:not(.draggable-card--dragging):active {
+    cursor: default;
+  }
+
+  /* Touch feedback */
+  .draggable-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease-out;
+  }
 }

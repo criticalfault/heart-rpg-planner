@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Monster } from '../../types';
 import { Button } from '../common/Button';
 import './MonsterCard.css';
+import '../../styles/animations.css';
 
 export interface MonsterCardProps {
   monster: Monster;
@@ -11,7 +12,7 @@ export interface MonsterCardProps {
   className?: string;
 }
 
-export const MonsterCard: React.FC<MonsterCardProps> = ({
+const MonsterCardComponent: React.FC<MonsterCardProps> = ({
   monster,
   onEdit,
   onDelete,
@@ -20,11 +21,19 @@ export const MonsterCard: React.FC<MonsterCardProps> = ({
 }) => {
   const cardClasses = [
     'monster-card',
+    'transition-all',
+    'hover-lift',
+    'focus-ring',
     className
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={cardClasses}>
+    <div 
+      className={cardClasses}
+      role="article"
+      aria-label={`Monster: ${monster.name}, Resistance: ${monster.resistance}, Protection: ${monster.protection}`}
+      tabIndex={0}
+    >
       <div className="monster-card-header">
         <h5 className="monster-card-name">{monster.name}</h5>
         <div className="monster-card-actions">
@@ -111,3 +120,21 @@ export const MonsterCard: React.FC<MonsterCardProps> = ({
     </div>
   );
 };
+
+// Memoized component with custom comparison function for better performance
+export const MonsterCard = memo(MonsterCardComponent, (prevProps, nextProps) => {
+  // Compare monster data
+  if (prevProps.monster.id !== nextProps.monster.id) return false;
+  if (prevProps.monster.name !== nextProps.monster.name) return false;
+  if (prevProps.monster.resistance !== nextProps.monster.resistance) return false;
+  if (prevProps.monster.protection !== nextProps.monster.protection) return false;
+  if (prevProps.monster.notes !== nextProps.monster.notes) return false;
+  if (JSON.stringify(prevProps.monster.attacks) !== JSON.stringify(nextProps.monster.attacks)) return false;
+  if (JSON.stringify(prevProps.monster.resources) !== JSON.stringify(nextProps.monster.resources)) return false;
+  
+  // Compare other props
+  if (prevProps.className !== nextProps.className) return false;
+  
+  // Function props are assumed to be stable (using useCallback in parent)
+  return true;
+});

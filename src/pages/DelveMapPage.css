@@ -1,0 +1,335 @@
+.delve-map-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Toolbar */
+.delve-map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.delve-map-toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.delve-map-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Zoom controls */
+.delve-map-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.delve-map-zoom-level {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Main container */
+.delve-map-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #fafafa;
+  transform-origin: top left;
+  transition: transform 0.2s ease-out;
+}
+
+.delve-map-grid {
+  width: 100%;
+  height: 100%;
+}
+
+/* Card selection highlighting */
+.delve-map-container .draggable-card.selected {
+  z-index: 200;
+}
+
+.delve-map-container .draggable-card.selected::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Dragging state */
+.delve-map-container .draggable-card--dragging {
+  opacity: 0.8;
+  transform: rotate(2deg) scale(1.05);
+  z-index: 1000;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Invalid drop position */
+.delve-map-container .draggable-card--invalid {
+  opacity: 0.6;
+}
+
+.delve-map-container .draggable-card--invalid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(220, 53, 69, 0.2);
+  border: 2px dashed #dc3545;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* Connection manager integration */
+.delve-map-container .connection-manager {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.delve-map-container .connection-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.delve-map-container .connection-instructions {
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  background: rgba(0, 123, 255, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .delve-map-toolbar {
+    padding: 10px 12px;
+  }
+
+  .delve-map-toolbar-section {
+    gap: 8px;
+  }
+
+  .delve-map-title {
+    font-size: 1.375rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .delve-map-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+
+  .delve-map-toolbar-section {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .delve-map-toolbar-section:first-child {
+    justify-content: flex-start;
+  }
+
+  .delve-map-title {
+    font-size: 1.25rem;
+  }
+
+  .delve-map-zoom-controls {
+    order: -1;
+    justify-content: center;
+  }
+
+  .delve-map-container {
+    /* Adjust for mobile viewport */
+    height: calc(100vh - 140px);
+  }
+}
+
+@media (max-width: 480px) {
+  .delve-map-toolbar {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .delve-map-toolbar-section {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .delve-map-toolbar-section button {
+    min-width: 70px;
+    font-size: 0.8rem;
+  }
+
+  .delve-map-zoom-controls {
+    width: 100%;
+    justify-content: center;
+    padding: 6px 12px;
+  }
+
+  .delve-map-title {
+    font-size: 1.125rem;
+  }
+
+  .delve-map-container {
+    height: calc(100vh - 160px);
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .delve-map-container .draggable-card {
+    /* Larger touch targets */
+    min-height: 44px;
+  }
+
+  .delve-map-container .draggable-card:hover {
+    /* Disable hover effects on touch devices */
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .delve-map-toolbar button {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+
+  .hex-grid-canvas {
+    /* Better touch interaction */
+    touch-action: pan-x pan-y;
+  }
+}
+
+/* Loading and empty states */
+.delve-map-empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #6c757d;
+  font-size: 1.125rem;
+  z-index: 10;
+}
+
+.delve-map-empty-state h3 {
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.delve-map-empty-state p {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+/* Accessibility improvements */
+.delve-map-container:focus-within .draggable-card {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.delve-map-container .draggable-card:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .delve-map-toolbar {
+    display: none;
+  }
+
+  .delve-map-container {
+    height: auto;
+    overflow: visible;
+  }
+
+  .delve-map-container .connection-controls,
+  .delve-map-container .connection-instructions {
+    display: none;
+  }
+}/* 
+Error handling styles */
+.delve-map-error {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.delve-map-error p {
+  color: #dc2626;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Loading overlay adjustments */
+.delve-map-page {
+  position: relative;
+}
+
+/* Responsive error display */
+@media (max-width: 640px) {
+  .delve-map-error {
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    flex-direction: column;
+    text-align: center;
+  }
+}

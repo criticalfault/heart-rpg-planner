@@ -145,9 +145,22 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .delve-card {
+    min-width: 260px;
+    max-width: 350px;
+    margin: 6px;
+    padding: 14px;
+  }
+
+  .delve-card-title {
+    font-size: 1.125rem;
+  }
+}
+
 @media (max-width: 768px) {
   .delve-card {
-    min-width: 280px;
+    min-width: 240px;
     max-width: 100%;
     margin: 4px;
     padding: 12px;
@@ -157,11 +170,93 @@
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    margin-bottom: 12px;
   }
 
   .delve-card-actions {
     justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
+  .delve-card-title {
+    font-size: 1.1rem;
+  }
 
+  .delve-card-content {
+    gap: 10px;
+  }
+
+  .delve-card-domains {
+    gap: 3px;
+  }
+
+  .delve-card-domain-chip {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .delve-card-monsters {
+    padding-top: 10px;
+    margin-top: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .delve-card {
+    min-width: 200px;
+    margin: 2px;
+    padding: 10px;
+  }
+
+  .delve-card-header {
+    margin-bottom: 10px;
+  }
+
+  .delve-card-actions {
+    gap: 4px;
+  }
+
+  .delve-card-actions button {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  .delve-card-title {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .delve-card-field-label {
+    font-size: 0.8rem;
+  }
+
+  .delve-card-list-item {
+    font-size: 0.8rem;
+  }
+
+  .delve-card-monsters-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .delve-card-monsters-title {
+    font-size: 0.8rem;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .delve-card-actions button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 12px;
+  }
+
+  .delve-card:hover {
+    /* Disable hover effects on touch devices */
+    border-color: #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 }

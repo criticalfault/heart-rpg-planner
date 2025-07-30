@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { HexPosition } from '../../types';
 import { 
   hexToPixel, 
@@ -6,10 +6,11 @@ import {
   getHexCorners,
   snapToHex,
   HexGridConfig,
-  DEFAULT_HEX_CONFIG,
+  getResponsiveHexConfig,
   PixelPosition 
 } from '../../utils/hexUtils';
 import { DragPreviewData } from '../cards/DraggableCard';
+import { rafThrottle } from '../../utils/performance';
 import './HexGrid.css';
 
 export interface HexGridProps {
@@ -25,10 +26,10 @@ export interface HexGridProps {
   className?: string;
 }
 
-export const HexGrid: React.FC<HexGridProps> = ({
+const HexGridComponent: React.FC<HexGridProps> = ({
   width,
   height,
-  config = DEFAULT_HEX_CONFIG,
+  config,
   showGrid = true,
   onHexClick,
   onHexHover,
@@ -42,22 +43,31 @@ export const HexGrid: React.FC<HexGridProps> = ({
   const [hoveredHex, setHoveredHex] = useState<HexPosition | null>(null);
   const [dragOverHex, setDragOverHex] = useState<HexPosition | null>(null);
   const [canDropOnHex, setCanDropOnHex] = useState<boolean>(true);
+  
+  // Use responsive config if none provided - memoize to prevent recalculation
+  const effectiveConfig = useMemo(() => 
+    config || getResponsiveHexConfig(width), 
+    [config, width]
+  );
 
-  // Calculate visible hex range based on viewport
-  const getVisibleHexRange = useCallback(() => {
-    const padding = config.hexSize * 2;
-    const topLeft = pixelToHex({ x: -padding, y: -padding }, config);
-    const bottomRight = pixelToHex({ x: width + padding, y: height + padding }, config);
+  // Calculate visible hex range based on viewport - memoize for performance
+  const visibleHexRange = useMemo(() => {
+    const padding = effectiveConfig.hexSize * 1.2; // Optimized padding for large maps
+    const topLeft = pixelToHex({ x: -padding, y: -padding }, effectiveConfig);
+    const bottomRight = pixelToHex({ x: width + padding, y: height + padding }, effectiveConfig);
+    
+    // Dynamic range limit based on viewport size for better performance on large maps
+    const maxRange = Math.min(100, Math.ceil(Math.max(width, height) / effectiveConfig.hexSize) + 10);
     
     return {
-      minQ: Math.floor(topLeft.q) - 1,
-      maxQ: Math.ceil(bottomRight.q) + 1,
-      minR: Math.floor(topLeft.r) - 1,
-      maxR: Math.ceil(bottomRight.r) + 1,
+      minQ: Math.max(Math.floor(topLeft.q) - 1, -maxRange),
+      maxQ: Math.min(Math.ceil(bottomRight.q) + 1, maxRange),
+      minR: Math.max(Math.floor(topLeft.r) - 1, -maxRange),
+      maxR: Math.min(Math.ceil(bottomRight.r) + 1, maxRange),
     };
-  }, [width, height, config]);
+  }, [width, height, effectiveConfig]);
 
-  // Draw the hex grid
+  // Draw the hex grid with performance optimizations
   const drawGrid = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !showGrid) return;
@@ -68,24 +78,49 @@ export const HexGrid: React.FC<HexGridProps> = ({
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    const { minQ, maxQ, minR, maxR } = getVisibleHexRange();
+    const { minQ, maxQ, minR, maxR } = visibleHexRange;
 
+    // Set up drawing context once
     ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    // Draw hexagons
+    // Batch drawing operations for better performance
+    ctx.beginPath();
+
+    // Draw all hex outlines in one path
     for (let q = minQ; q <= maxQ; q++) {
       for (let r = minR; r <= maxR; r++) {
         const hex = { q, r };
-        const center = hexToPixel(hex, config);
+        const center = hexToPixel(hex, effectiveConfig);
         
-        // Skip if hex is outside viewport
-        if (center.x < -config.hexSize || center.x > width + config.hexSize ||
-            center.y < -config.hexSize || center.y > height + config.hexSize) {
+        // Skip if hex is outside viewport (with smaller buffer for performance)
+        if (center.x < -effectiveConfig.hexSize * 0.5 || center.x > width + effectiveConfig.hexSize * 0.5 ||
+            center.y < -effectiveConfig.hexSize * 0.5 || center.y > height + effectiveConfig.hexSize * 0.5) {
           continue;
         }
 
-        const corners = getHexCorners(center, config);
+        const corners = getHexCorners(center, effectiveConfig);
+        
+        // Add hex path to the batch
+        ctx.moveTo(corners[0].x, corners[0].y);
+        for (let i = 1; i < corners.length; i++) {
+          ctx.lineTo(corners[i].x, corners[i].y);
+        }
+        ctx.closePath();
+      }
+    }
+
+    // Stroke all hexes at once
+    ctx.stroke();
+
+    // Draw highlights separately (these are less common)
+    if (hoveredHex || dragOverHex) {
+      const highlightHex = dragOverHex || hoveredHex;
+      if (highlightHex) {
+        const center = hexToPixel(highlightHex, effectiveConfig);
+        const corners = getHexCorners(center, effectiveConfig);
         
         ctx.beginPath();
         ctx.moveTo(corners[0].x, corners[0].y);
@@ -94,25 +129,18 @@ export const HexGrid: React.FC<HexGridProps> = ({
         }
         ctx.closePath();
         
-        // Highlight hovered hex
-        if (hoveredHex && hoveredHex.q === q && hoveredHex.r === r) {
-          ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';
-          ctx.fill();
-        }
-
-        // Highlight drag over hex
-        if (dragOverHex && dragOverHex.q === q && dragOverHex.r === r) {
+        if (dragOverHex) {
           ctx.fillStyle = canDropOnHex ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)';
-          ctx.fill();
+        } else {
+          ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';
         }
-        
-        ctx.stroke();
+        ctx.fill();
       }
     }
-  }, [width, height, config, showGrid, hoveredHex, dragOverHex, canDropOnHex, getVisibleHexRange]);
+  }, [width, height, effectiveConfig, showGrid, hoveredHex, dragOverHex, canDropOnHex, visibleHexRange]);
 
-  // Handle mouse events
-  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+  // Handle mouse events with throttling for better performance
+  const handleMouseMove = useCallback(rafThrottle((event: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -121,10 +149,10 @@ export const HexGrid: React.FC<HexGridProps> = ({
       y: event.clientY - rect.top,
     };
 
-    const hex = pixelToHex(pixel, config);
+    const hex = pixelToHex(pixel, effectiveConfig);
     setHoveredHex(hex);
     onHexHover?.(hex, pixel);
-  }, [config, onHexHover]);
+  }), [effectiveConfig, onHexHover]);
 
   const handleMouseLeave = useCallback(() => {
     setHoveredHex(null);
@@ -140,12 +168,12 @@ export const HexGrid: React.FC<HexGridProps> = ({
       y: event.clientY - rect.top,
     };
 
-    const hex = pixelToHex(pixel, config);
+    const hex = pixelToHex(pixel, effectiveConfig);
     onHexClick?.(hex, pixel);
-  }, [config, onHexClick]);
+  }, [effectiveConfig, onHexClick]);
 
-  // Handle drag over for the entire grid
-  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+  // Handle drag over for the entire grid with throttling
+  const handleDragOver = useCallback(rafThrottle((event: React.DragEvent<HTMLDivElement>) => {
     if (!containerRef.current || !onDrop) return;
 
     event.preventDefault();
@@ -156,7 +184,7 @@ export const HexGrid: React.FC<HexGridProps> = ({
       y: event.clientY - rect.top,
     };
 
-    const { hex } = snapToHex(pixel, config);
+    const { hex } = snapToHex(pixel, effectiveConfig);
     
     // Check if position is occupied
     try {
@@ -170,7 +198,7 @@ export const HexGrid: React.FC<HexGridProps> = ({
     }
 
     setDragOverHex(hex);
-  }, [config, onDrop, isOccupied]);
+  }), [effectiveConfig, onDrop, isOccupied]);
 
   // Handle drag leave
   const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
@@ -199,7 +227,7 @@ export const HexGrid: React.FC<HexGridProps> = ({
       y: event.clientY - rect.top,
     };
 
-    const { hex } = snapToHex(pixel, config);
+    const { hex } = snapToHex(pixel, effectiveConfig);
 
     try {
       const dragData = JSON.parse(event.dataTransfer.getData('application/json')) as DragPreviewData;
@@ -216,7 +244,7 @@ export const HexGrid: React.FC<HexGridProps> = ({
 
     setDragOverHex(null);
     setCanDropOnHex(true);
-  }, [config, onDrop, isOccupied]);
+  }, [effectiveConfig, onDrop, isOccupied]);
 
   // Redraw grid when dependencies change
   useEffect(() => {
@@ -272,5 +300,24 @@ export const HexGrid: React.FC<HexGridProps> = ({
     </div>
   );
 };
+
+// Memoized component with custom comparison function for better performance
+export const HexGrid = memo(HexGridComponent, (prevProps, nextProps) => {
+  // Compare dimensions
+  if (prevProps.width !== nextProps.width) return false;
+  if (prevProps.height !== nextProps.height) return false;
+  
+  // Compare config (shallow comparison of key properties)
+  const prevConfig = prevProps.config;
+  const nextConfig = nextProps.config;
+  if (prevConfig?.hexSize !== nextConfig?.hexSize) return false;
+  
+  // Compare other props
+  if (prevProps.showGrid !== nextProps.showGrid) return false;
+  if (prevProps.className !== nextProps.className) return false;
+  
+  // Function props and children are assumed to be stable
+  return true;
+});
 
 export default HexGrid;

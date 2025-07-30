@@ -1,17 +1,44 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { DelveMapProvider } from './context/DelveMapContext';
+import { ErrorBoundary, ToastContainer } from './components/common';
+import { useToast } from './hooks/useToast';
+import DelveMapPage from './pages/DelveMapPage';
+import { LibraryPage } from './pages/LibraryPage';
 import './App.css';
-import HexGridExample from './components/grid/HexGridExample';
+
+function AppContent() {
+  const { toasts, removeToast } = useToast();
+
+  return (
+    <div className="App">
+      <Router>
+        <Routes>
+          <Route path="/" element={<DelveMapPage />} />
+          <Route path="/library" element={<LibraryPage />} />
+        </Routes>
+      </Router>
+      
+      <ToastContainer 
+        toasts={toasts} 
+        onRemoveToast={removeToast}
+        position="top-right"
+      />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Heart RPG Delve Map Planner</h1>
-        <p>Welcome to the Heart RPG Delve Map planning tool!</p>
-      </header>
-      <main>
-        <HexGridExample />
-      </main>
-    </div>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('Application error:', error, errorInfo);
+      }}
+    >
+      <DelveMapProvider>
+        <AppContent />
+      </DelveMapProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -1,0 +1,35 @@
+.connectable-card {
+  position: relative;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.connectable-card--connection-mode {
+  cursor: pointer;
+}
+
+.connectable-card--connection-mode:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.connectable-card--selected {
+  outline: 3px solid #059669;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.connectable-card-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* Show connection points on hover when in connection mode */
+.connectable-card--connection-mode:hover .connection-point {
+  opacity: 1;
+}
+
+/* Always show connection points when card is selected */
+.connectable-card--selected .connection-point {
+  opacity: 1;
+}

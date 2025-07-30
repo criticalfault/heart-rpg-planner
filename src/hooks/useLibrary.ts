@@ -64,6 +64,37 @@ export function useLibrary() {
     return state.library.monsters.find(monster => monster.id === id);
   };
 
+  const copyLandmarkFromLibrary = (libraryLandmark: Landmark) => {
+    const newLandmark: Landmark = {
+      ...libraryLandmark,
+      id: crypto.randomUUID()
+    };
+    dispatch({ type: 'ADD_LANDMARK', payload: newLandmark });
+    return newLandmark;
+  };
+
+  const copyDelveFromLibrary = (libraryDelve: Delve) => {
+    const newDelve: Delve = {
+      ...libraryDelve,
+      id: crypto.randomUUID(),
+      monsters: libraryDelve.monsters.map(monster => ({
+        ...monster,
+        id: crypto.randomUUID()
+      }))
+    };
+    dispatch({ type: 'ADD_DELVE', payload: newDelve });
+    return newDelve;
+  };
+
+  const copyMonsterFromLibrary = (libraryMonster: Monster, delveId: string) => {
+    const newMonster: Monster = {
+      ...libraryMonster,
+      id: crypto.randomUUID()
+    };
+    dispatch({ type: 'ADD_MONSTER', payload: { delveId, monster: newMonster } });
+    return newMonster;
+  };
+
   return {
     library: state.library,
     addToLibrary,
@@ -80,6 +111,9 @@ export function useLibrary() {
     deleteMonsterFromLibrary,
     getLibraryLandmarkById,
     getLibraryDelveById,
-    getLibraryMonsterById
+    getLibraryMonsterById,
+    copyLandmarkFromLibrary,
+    copyDelveFromLibrary,
+    copyMonsterFromLibrary
   };
 }

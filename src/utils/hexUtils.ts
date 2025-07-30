@@ -15,6 +15,29 @@ export const DEFAULT_HEX_CONFIG: HexGridConfig = {
   spacing: 10,
 };
 
+// Responsive hex configurations for different screen sizes
+export const RESPONSIVE_HEX_CONFIGS = {
+  desktop: { hexSize: 60, spacing: 10 },
+  tablet: { hexSize: 50, spacing: 8 },
+  mobile: { hexSize: 40, spacing: 6 },
+  small: { hexSize: 35, spacing: 5 },
+};
+
+/**
+ * Get responsive hex configuration based on screen width
+ */
+export function getResponsiveHexConfig(screenWidth: number): HexGridConfig {
+  if (screenWidth >= 1024) {
+    return RESPONSIVE_HEX_CONFIGS.desktop;
+  } else if (screenWidth >= 768) {
+    return RESPONSIVE_HEX_CONFIGS.tablet;
+  } else if (screenWidth >= 480) {
+    return RESPONSIVE_HEX_CONFIGS.mobile;
+  } else {
+    return RESPONSIVE_HEX_CONFIGS.small;
+  }
+}
+
 /**
  * Convert hex coordinates (q, r) to pixel coordinates (x, y)
  * Uses flat-topped hexagon orientation

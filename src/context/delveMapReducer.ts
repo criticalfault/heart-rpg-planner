@@ -1,5 +1,6 @@
-import { DelveMapState, DelveMap } from '../types';
+import { DelveMapState, DelveMap, Library } from '../types';
 import { DelveMapAction } from './DelveMapContext';
+import { mapsStorage, currentMapStorage } from '../utils/localStorage';
 
 export function delveMapReducer(state: DelveMapState, action: DelveMapAction): DelveMapState {
   switch (action.type) {
@@ -167,6 +168,19 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
         editingCard: action.payload
       };
 
+    // UI actions
+    case 'TOGGLE_CONNECTIONS':
+      return {
+        ...state,
+        showConnections: action.payload !== undefined ? action.payload : !state.showConnections
+      };
+
+    case 'TOGGLE_GRID':
+      return {
+        ...state,
+        gridVisible: action.payload !== undefined ? action.payload : !state.gridVisible
+      };
+
     // Library actions
     case 'ADD_TO_LIBRARY':
       const { type, item } = action.payload;
@@ -255,6 +269,8 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
       };
 
     case 'CLEAR_MAP':
+      // Clear current map from storage
+      currentMapStorage.clear();
       return {
         ...state,
         currentMap: null,
@@ -265,6 +281,102 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
         selectedCard: null,
         editingCard: null,
         draggedCard: null
+      };
+
+    case 'SAVE_MAP':
+      if (state.currentMap) {
+        const updatedMap: DelveMap = {
+          ...state.currentMap,
+          name: action.payload?.name || state.currentMap.name,
+          landmarks: state.landmarks,
+          delves: state.delves,
+          placedCards: state.placedCards,
+          connections: state.connections,
+          updatedAt: new Date()
+        };
+        
+        // Save to storage
+        mapsStorage.saveMap(updatedMap);
+        currentMapStorage.save(updatedMap);
+        
+        return {
+          ...state,
+          currentMap: updatedMap
+        };
+      }
+      return state;
+
+    // Persistence actions
+    case 'IMPORT_MAP':
+      const importedMap = action.payload;
+      // Save imported map to storage
+      mapsStorage.saveMap(importedMap);
+      currentMapStorage.save(importedMap);
+      
+      return {
+        ...state,
+        currentMap: importedMap,
+        landmarks: importedMap.landmarks,
+        delves: importedMap.delves,
+        placedCards: importedMap.placedCards,
+        connections: importedMap.connections
+      };
+
+    case 'IMPORT_LIBRARY':
+      const { library: importedLibrary, merge } = action.payload;
+      let finalLibrary: Library;
+      
+      if (merge) {
+        finalLibrary = {
+          monsters: [...state.library.monsters, ...importedLibrary.monsters],
+          landmarks: [...state.library.landmarks, ...importedLibrary.landmarks],
+          delves: [...state.library.delves, ...importedLibrary.delves]
+        };
+      } else {
+        finalLibrary = importedLibrary;
+      }
+      
+      return {
+        ...state,
+        library: finalLibrary
+      };
+
+    case 'RESTORE_FROM_AUTO_SAVE':
+      const autoSaveData = action.payload;
+      if (state.currentMap && autoSaveData) {
+        const restoredMap: DelveMap = {
+          ...state.currentMap,
+          landmarks: autoSaveData.landmarks || state.landmarks,
+          delves: autoSaveData.delves || state.delves,
+          placedCards: autoSaveData.placedCards || state.placedCards,
+          connections: autoSaveData.connections || state.connections,
+          updatedAt: new Date()
+        };
+        
+        return {
+          ...state,
+          currentMap: restoredMap,
+          landmarks: restoredMap.landmarks,
+          delves: restoredMap.delves,
+          placedCards: restoredMap.placedCards,
+          connections: restoredMap.connections
+        };
+      }
+      return state;
+
+    // Error handling actions
+    case 'SET_ERROR':
+      return {
+        ...state,
+        error: action.payload,
+        loading: false
+      };
+
+    case 'SET_LOADING':
+      return {
+        ...state,
+        loading: action.payload,
+        error: action.payload ? null : state.error // Clear error when starting to load
       };
 
     default:
