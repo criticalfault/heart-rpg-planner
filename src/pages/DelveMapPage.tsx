@@ -104,11 +104,13 @@ export const DelveMapPage: React.FC = () => {
       setSelectedCard(cardId);
       setFocusedCard(cardId);
       
-      // Scroll to selected card
+      // Scroll to selected card (accounting for zoom)
       const placedCard = placedCards.find(card => card.id === cardId);
       if (placedCard && containerRef.current) {
-        const scrollX = Math.max(0, placedCard.position.x - containerRef.current.clientWidth / 2);
-        const scrollY = Math.max(0, placedCard.position.y - containerRef.current.clientHeight / 2);
+        const scaledX = placedCard.position.x * zoom;
+        const scaledY = placedCard.position.y * zoom;
+        const scrollX = Math.max(0, scaledX - containerRef.current.clientWidth / 2);
+        const scrollY = Math.max(0, scaledY - containerRef.current.clientHeight / 2);
         containerRef.current.scrollTo({
           left: scrollX,
           top: scrollY,
@@ -147,11 +149,11 @@ export const DelveMapPage: React.FC = () => {
       if (allCardIds.length > 0) {
         setSelectedCard(allCardIds[allCardIds.length - 1]);
       }
-      // Also scroll to bottom-right of canvas
+      // Also scroll to bottom-right of canvas (accounting for zoom)
       if (containerRef.current) {
         containerRef.current.scrollTo({ 
-          left: 3000 - containerRef.current.clientWidth, 
-          top: 2000 - containerRef.current.clientHeight, 
+          left: (3000 * zoom) - containerRef.current.clientWidth, 
+          top: (2000 * zoom) - containerRef.current.clientHeight, 
           behavior: 'smooth' 
         });
       }
@@ -229,8 +231,8 @@ export const DelveMapPage: React.FC = () => {
     
     const rect = event.currentTarget.getBoundingClientRect();
     const position = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
+      x: (event.clientX - rect.left) / zoom, // Adjust for zoom level
+      y: (event.clientY - rect.top) / zoom   // Adjust for zoom level
     };
 
     try {
@@ -239,7 +241,7 @@ export const DelveMapPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to parse drag data:', error);
     }
-  }, [handleCardDrop]);
+  }, [handleCardDrop, zoom]);
 
   // Handle canvas drag over
   const handleCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
@@ -455,10 +457,12 @@ export const DelveMapPage: React.FC = () => {
     // Auto-select the placed card to make it visible
     setSelectedCard(cardId);
     
-    // Scroll to the placed card to make it visible
+    // Scroll to the placed card to make it visible (accounting for zoom)
     if (containerRef.current) {
-      const scrollX = Math.max(0, position.x - containerRef.current.clientWidth / 2);
-      const scrollY = Math.max(0, position.y - containerRef.current.clientHeight / 2);
+      const scaledX = position.x * zoom;
+      const scaledY = position.y * zoom;
+      const scrollX = Math.max(0, scaledX - containerRef.current.clientWidth / 2);
+      const scrollY = Math.max(0, scaledY - containerRef.current.clientHeight / 2);
       containerRef.current.scrollTo({
         left: scrollX,
         top: scrollY,
@@ -716,8 +720,8 @@ export const DelveMapPage: React.FC = () => {
             onClick={() => {
               if (containerRef.current) {
                 containerRef.current.scrollTo({
-                  left: 1500 - containerRef.current.clientWidth / 2,
-                  top: 1000 - containerRef.current.clientHeight / 2,
+                  left: (1500 * zoom) - containerRef.current.clientWidth / 2,
+                  top: (1000 * zoom) - containerRef.current.clientHeight / 2,
                   behavior: 'smooth'
                 });
               }
@@ -765,14 +769,24 @@ export const DelveMapPage: React.FC = () => {
       <div 
         ref={containerRef}
         className="delve-map-container"
-        style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
       >
         <div 
-          className="delve-map-canvas"
-          onDrop={handleCanvasDrop}
-          onDragOver={handleCanvasDragOver}
-          onClick={handleCanvasClick}
+          className="delve-map-zoom-wrapper"
+          style={{
+            width: `${3000 * zoom}px`,
+            height: `${2000 * zoom}px`
+          }}
         >
+          <div 
+            className="delve-map-canvas"
+            onDrop={handleCanvasDrop}
+            onDragOver={handleCanvasDragOver}
+            onClick={handleCanvasClick}
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top left'
+            }}
+          >
           {/* Render placed cards */}
           {placedCards.map(placedCard => 
             renderCard(placedCard.id, placedCard.position)
@@ -790,6 +804,7 @@ export const DelveMapPage: React.FC = () => {
             onToggleConnectionMode={handleToggleConnectionMode}
             onConnectionCardClick={handleCardConnectionClick}
           />
+          </div>
         </div>
       </div>
 

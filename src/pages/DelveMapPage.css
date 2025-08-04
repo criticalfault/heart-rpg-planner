@@ -71,9 +71,12 @@
   position: relative;
   overflow: auto; /* Enable scrolling */
   background: #fafafa;
-  transform-origin: top left;
-  transition: transform 0.2s ease-out;
   /* Full screen - no margin for card palette */
+}
+
+.delve-map-zoom-wrapper {
+  position: relative;
+  transition: width 0.2s ease-out, height 0.2s ease-out;
 }
 
 .delve-map-canvas {
@@ -85,8 +88,8 @@
     radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
   background-size: 30px 30px;
   cursor: crosshair;
-  min-width: 3000px;
-  min-height: 2000px;
+  transform-origin: top left;
+  transition: transform 0.2s ease-out;
 }
 
 .delve-map-canvas:hover {
