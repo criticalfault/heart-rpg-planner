@@ -160,24 +160,7 @@ export const DelveMapPage: React.FC = () => {
     announceChanges: true
   }, allCardIds);
 
-  // Handle container resize and responsive hex config
-  useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setContainerSize({
-          width: rect.width,
-          height: rect.height
-        });
-        
-        // Container size updated
-      }
-    };
 
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
 
   // This function is no longer needed with free-form placement
 
