@@ -1,11 +1,16 @@
 import { useDelveMapContext } from '../context/DelveMapContext';
-import { Delve, Monster, PlacedCard, HexPosition } from '../types';
+import { Delve, Monster, PlacedCard, Position } from '../types';
 
 export function useDelves() {
   const { state, dispatch } = useDelveMapContext();
 
-  const addDelve = (delve: Delve) => {
-    dispatch({ type: 'ADD_DELVE', payload: delve });
+  const addDelve = (delve: Omit<Delve, 'id'> | Delve) => {
+    const delveWithId = {
+      ...delve,
+      id: delve.id || `delve-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    } as Delve;
+    dispatch({ type: 'ADD_DELVE', payload: delveWithId });
+    return delveWithId;
   };
 
   const updateDelve = (id: string, delve: Partial<Delve>) => {
@@ -16,7 +21,7 @@ export function useDelves() {
     dispatch({ type: 'DELETE_DELVE', payload: id });
   };
 
-  const placeDelve = (id: string, position: HexPosition) => {
+  const placeDelve = (id: string, position: Position) => {
     const placedCard: PlacedCard = {
       id,
       type: 'delve',
@@ -25,7 +30,7 @@ export function useDelves() {
     dispatch({ type: 'PLACE_CARD', payload: placedCard });
   };
 
-  const moveDelve = (id: string, position: HexPosition) => {
+  const moveDelve = (id: string, position: Position) => {
     dispatch({ type: 'MOVE_CARD', payload: { id, position } });
   };
 

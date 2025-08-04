@@ -10,6 +10,10 @@ interface ConnectionManagerProps {
   delves: Delve[];
   showConnections: boolean;
   onToggleConnections: () => void;
+  connectionMode?: boolean;
+  selectedConnectionCard?: string | null;
+  onToggleConnectionMode?: () => void;
+  onConnectionCardClick?: (cardId: string) => void;
 }
 
 export function ConnectionManager({
@@ -17,12 +21,14 @@ export function ConnectionManager({
   landmarks,
   delves,
   showConnections,
-  onToggleConnections
+  onToggleConnections,
+  connectionMode = false,
+  selectedConnectionCard = null,
+  onToggleConnectionMode,
+  onConnectionCardClick
 }: ConnectionManagerProps) {
-  const { connections, createConnection, deleteConnection } = useConnections();
+  const { connections, deleteConnection } = useConnections();
   
-  const [connectionMode, setConnectionMode] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
 
   // Get card data by ID
@@ -50,43 +56,11 @@ export function ConnectionManager({
     return 'landmark-to-delve';
   };
 
-  // Handle card click in connection mode
-  const handleCardClick = useCallback((cardId: string) => {
-    if (!connectionMode) return;
-
-    if (!selectedCard) {
-      // First card selection
-      setSelectedCard(cardId);
-    } else if (selectedCard === cardId) {
-      // Clicking same card - deselect
-      setSelectedCard(null);
-    } else {
-      // Second card selection - create connection
-      const fromCard = getCardById(selectedCard);
-      const toCard = getCardById(cardId);
-      
-      if (fromCard && toCard) {
-        // Check if connection already exists
-        const existingConnection = connections.find(
-          conn => 
-            (conn.fromId === selectedCard && conn.toId === cardId) ||
-            (conn.fromId === cardId && conn.toId === selectedCard)
-        );
-
-        if (!existingConnection) {
-          const connectionType = getConnectionType(fromCard.type, toCard.type);
-          createConnection(selectedCard, cardId, connectionType);
-        }
-      }
-      
-      setSelectedCard(null);
-    }
-  }, [connectionMode, selectedCard, connections, createConnection, getCardById]);
-
   // Toggle connection mode
   const toggleConnectionMode = () => {
-    setConnectionMode(!connectionMode);
-    setSelectedCard(null);
+    if (onToggleConnectionMode) {
+      onToggleConnectionMode();
+    }
     setSelectedConnection(null);
   };
 
@@ -103,8 +77,10 @@ export function ConnectionManager({
 
   // Exit connection mode
   const exitConnectionMode = () => {
-    setConnectionMode(false);
-    setSelectedCard(null);
+    if (onToggleConnectionMode && connectionMode) {
+      onToggleConnectionMode();
+    }
+    setSelectedConnection(null);
   };
 
   return (
@@ -141,7 +117,7 @@ export function ConnectionManager({
       {/* Connection mode instructions */}
       {connectionMode && (
         <div className="connection-instructions">
-          {!selectedCard ? (
+          {!selectedConnectionCard ? (
             <p>Click on a card to start creating a connection</p>
           ) : (
             <p>Click on another card to complete the connection</p>
@@ -151,7 +127,18 @@ export function ConnectionManager({
 
       {/* Connection lines (rendered in SVG) */}
       {showConnections && (
-        <svg className="connections-overlay" style={{ pointerEvents: 'none' }}>
+        <svg 
+          className="connections-overlay" 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'auto',
+            zIndex: 10
+          }}
+        >
           <defs>
             <marker
               id="arrowhead"
@@ -179,29 +166,7 @@ export function ConnectionManager({
         </svg>
       )}
 
-      {/* Card click handlers (invisible overlay) */}
-      {connectionMode && (
-        <div className="connection-click-overlay">
-          {placedCards.map(card => {
-            const cardData = getCardById(card.id);
-            if (!cardData) return null;
 
-            return (
-              <div
-                key={card.id}
-                className={`connection-card-target ${
-                  card.id === selectedCard ? 'selected' : ''
-                }`}
-                onClick={() => handleCardClick(card.id)}
-                style={{
-                  position: 'absolute',
-                  // Position will be set by parent component based on hex position
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

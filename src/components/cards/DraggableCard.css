@@ -22,8 +22,18 @@
 }
 
 .draggable-card--selected {
-  box-shadow: 0 0 0 3px #007bff;
+  box-shadow: 0 0 0 4px #007bff, 0 0 20px rgba(0, 123, 255, 0.5);
   z-index: 100;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 4px #007bff, 0 0 20px rgba(0, 123, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px #007bff, 0 0 30px rgba(0, 123, 255, 0.8);
+  }
 }
 
 .draggable-card--invalid {

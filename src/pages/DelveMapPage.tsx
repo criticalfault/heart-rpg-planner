@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { HexGrid } from '../components/grid/HexGrid';
-import { DraggableCard } from '../components/cards/DraggableCard';
+import { SimpleCard } from '../components/cards/SimpleCard';
 import { LandmarkCard } from '../components/cards/LandmarkCard';
 import { DelveCard } from '../components/cards/DelveCard';
+import { CardPalette } from '../components/cards/CardPalette';
 import { ConnectionManager } from '../components/connections/ConnectionManager';
 import { Button, LoadingSpinner, ConfirmDialog, ErrorBoundary } from '../components/common';
 import { LandmarkForm } from '../components/cards/LandmarkForm';
@@ -12,12 +12,12 @@ import { useDelveMap } from '../hooks/useDelveMap';
 import { useLandmarks } from '../hooks/useLandmarks';
 import { useDelves } from '../hooks/useDelves';
 import { useLibrary } from '../hooks/useLibrary';
+import { useConnections } from '../hooks/useConnections';
 import { useToast, useErrorHandler } from '../hooks';
 import { useDelveMapContext } from '../context/DelveMapContext';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePerformanceOptimization } from '../hooks/usePerformanceOptimization';
-import { HexPosition, Landmark, Delve } from '../types';
-import { DEFAULT_HEX_CONFIG, getResponsiveHexConfig } from '../utils/hexUtils';
+import { Position, Landmark, Delve } from '../types';
 import './DelveMapPage.css';
 import '../styles/PersistenceManager.css';
 
@@ -25,10 +25,14 @@ export const DelveMapPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [zoom, setZoom] = useState(1);
-  const [hexConfig, setHexConfig] = useState(DEFAULT_HEX_CONFIG);
   const [showLandmarkForm, setShowLandmarkForm] = useState(false);
   const [showDelveForm, setShowDelveForm] = useState(false);
   const [showPersistenceManager, setShowPersistenceManager] = useState(false);
+  const [showCardPalette, setShowCardPalette] = useState(true);
+  
+  // Connection state
+  const [connectionMode, setConnectionMode] = useState(false);
+  const [selectedConnectionCard, setSelectedConnectionCard] = useState<string | null>(null);
   
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -46,7 +50,7 @@ export const DelveMapPage: React.FC = () => {
   });
 
   // Context hooks
-  const { state, dispatch } = useDelveMapContext();
+  const { state, dispatch, autoSave } = useDelveMapContext();
   const showGrid = state.gridVisible;
   const showConnections = state.showConnections;
   const { loading, error } = state;
@@ -80,6 +84,7 @@ export const DelveMapPage: React.FC = () => {
   } = useDelves();
 
   const { addToLibrary } = useLibrary();
+  const { connections, createConnection } = useConnections();
 
   // Performance optimization
   const { batchUpdate } = usePerformanceOptimization({
@@ -98,6 +103,18 @@ export const DelveMapPage: React.FC = () => {
     onCardSelect: (cardId) => {
       setSelectedCard(cardId);
       setFocusedCard(cardId);
+      
+      // Scroll to selected card
+      const placedCard = placedCards.find(card => card.id === cardId);
+      if (placedCard && containerRef.current) {
+        const scrollX = Math.max(0, placedCard.position.x - containerRef.current.clientWidth / 2);
+        const scrollY = Math.max(0, placedCard.position.y - containerRef.current.clientHeight / 2);
+        containerRef.current.scrollTo({
+          left: scrollX,
+          top: scrollY,
+          behavior: 'smooth'
+        });
+      }
     },
     onCardEdit: (cardId) => {
       handleCardEdit(cardId);
@@ -121,10 +138,22 @@ export const DelveMapPage: React.FC = () => {
       if (allCardIds.length > 0) {
         setSelectedCard(allCardIds[0]);
       }
+      // Also scroll to top-left of canvas
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+      }
     },
     onEnd: () => {
       if (allCardIds.length > 0) {
         setSelectedCard(allCardIds[allCardIds.length - 1]);
+      }
+      // Also scroll to bottom-right of canvas
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ 
+          left: 3000 - containerRef.current.clientWidth, 
+          top: 2000 - containerRef.current.clientHeight, 
+          behavior: 'smooth' 
+        });
       }
     },
     isEnabled: !showLandmarkForm && !showDelveForm && !showPersistenceManager && !confirmDialog.isOpen,
@@ -141,9 +170,7 @@ export const DelveMapPage: React.FC = () => {
           height: rect.height
         });
         
-        // Update hex config based on screen width
-        const newHexConfig = getResponsiveHexConfig(window.innerWidth);
-        setHexConfig(newHexConfig);
+        // Container size updated
       }
     };
 
@@ -152,14 +179,7 @@ export const DelveMapPage: React.FC = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Check if a hex position is occupied
-  const isHexOccupied = useCallback((position: HexPosition, excludeId?: string) => {
-    return placedCards.some(card => 
-      card.position.q === position.q && 
-      card.position.r === position.r && 
-      card.id !== excludeId
-    );
-  }, [placedCards]);
+  // This function is no longer needed with free-form placement
 
   // Get card data by ID
   const getCardById = useCallback((id: string) => {
@@ -172,12 +192,9 @@ export const DelveMapPage: React.FC = () => {
     return null;
   }, [landmarks, delves]);
 
-  // Handle card drop on hex grid with performance optimization
-  const handleCardDrop = useCallback((cardId: string, cardType: 'landmark' | 'delve', position: HexPosition) => {
-    // Check if position is already occupied
-    if (isHexOccupied(position, cardId)) {
-      return;
-    }
+  // Handle card drop on canvas
+  const handleCardDrop = useCallback((cardId: string, cardType: 'landmark' | 'delve', position: { x: number; y: number }) => {
+    console.log('Dropping card:', cardId, 'at position:', position);
 
     // Batch the updates for better performance
     batchUpdate([
@@ -196,23 +213,49 @@ export const DelveMapPage: React.FC = () => {
         setDraggedCard(null);
       }
     ]);
-  }, [isHexOccupied, placedCards, dispatch, setDraggedCard, batchUpdate]);
+  }, [placedCards, dispatch, setDraggedCard, batchUpdate]);
 
   // Handle card drag end (for DraggableCard component)
-  const handleCardDragEnd = useCallback((cardId: string, position: HexPosition) => {
+  const handleCardDragEnd = useCallback((cardId: string, position: { x: number; y: number }) => {
     const cardData = getCardById(cardId);
     if (!cardData) return;
 
     handleCardDrop(cardId, cardData.type, position);
   }, [getCardById, handleCardDrop]);
 
-  // Handle hex click
-  const handleHexClick = useCallback((_hex: HexPosition) => {
-    // Deselect any selected card when clicking empty hex
-    if (selectedCard) {
+  // Handle canvas drop
+  const handleCanvasDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const position = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+
+    try {
+      const dragData = JSON.parse(event.dataTransfer.getData('application/json'));
+      handleCardDrop(dragData.cardId, dragData.cardType, position);
+    } catch (error) {
+      console.error('Failed to parse drag data:', error);
+    }
+  }, [handleCardDrop]);
+
+  // Handle canvas drag over
+  const handleCanvasDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // Handle canvas click
+  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    // Deselect any selected card when clicking empty canvas
+    if (selectedCard && event.target === event.currentTarget) {
       setSelectedCard(null);
     }
   }, [selectedCard, setSelectedCard]);
+
+  // Hex click handler removed - using canvas click instead
 
   // Handle card selection
   const handleCardSelect = useCallback((cardId: string) => {
@@ -355,8 +398,148 @@ export const DelveMapPage: React.FC = () => {
     toastMessage: 'There was an error saving the item to your library. Please try again.'
   }), [addToLibrary, showSuccess, wrapAsync]);
 
+  // Handle placing a card on the map (from the palette)
+  const handlePlaceCardOnMap = useCallback((cardId: string, cardType: 'landmark' | 'delve') => {
+    console.log('Placing card:', cardId, cardType);
+    
+    // Use the large canvas dimensions for placement
+    const canvasWidth = 3000;
+    const canvasHeight = 2000;
+    
+    // Simple placement strategy - place cards in a grid pattern with some randomness
+    const findEmptyPosition = (): { x: number; y: number } => {
+      const cardSpacing = 250; // Space between cards
+      const margin = 150; // Margin from edges
+      
+      // Calculate grid dimensions
+      const gridCols = Math.floor((canvasWidth - 2 * margin) / cardSpacing);
+      const gridRows = Math.floor((canvasHeight - 2 * margin) / cardSpacing);
+      
+      // Try positions in a grid pattern
+      for (let row = 0; row < gridRows; row++) {
+        for (let col = 0; col < gridCols; col++) {
+          const baseX = margin + col * cardSpacing;
+          const baseY = margin + row * cardSpacing;
+          
+          // Add some randomness to avoid perfect grid
+          const x = baseX + (Math.random() - 0.5) * 100;
+          const y = baseY + (Math.random() - 0.5) * 100;
+          
+          // Check if position is not too close to other cards
+          const tooClose = placedCards.some(card => {
+            const distance = Math.sqrt(
+              Math.pow(card.position.x - x, 2) + Math.pow(card.position.y - y, 2)
+            );
+            return distance < 200; // Minimum distance between cards
+          });
+          
+          if (!tooClose) {
+            return { x, y };
+          }
+        }
+      }
+      
+      // Fallback to random position if no good spot found
+      return {
+        x: margin + Math.random() * (canvasWidth - 2 * margin),
+        y: margin + Math.random() * (canvasHeight - 2 * margin)
+      };
+    };
+
+    const position = findEmptyPosition();
+    console.log('Placing card at position:', position);
+    
+    // Place the card
+    handleCardDrop(cardId, cardType, position);
+    
+    // Auto-select the placed card to make it visible
+    setSelectedCard(cardId);
+    
+    // Scroll to the placed card to make it visible
+    if (containerRef.current) {
+      const scrollX = Math.max(0, position.x - containerRef.current.clientWidth / 2);
+      const scrollY = Math.max(0, position.y - containerRef.current.clientHeight / 2);
+      containerRef.current.scrollTo({
+        left: scrollX,
+        top: scrollY,
+        behavior: 'smooth'
+      });
+    }
+    
+    // Show success message
+    showSuccess('Card Placed', `Card placed on the map and view scrolled to show it!`);
+  }, [placedCards, handleCardDrop, showSuccess, setSelectedCard]);
+
+  // Handle editing a card from the palette
+  const handleEditCardFromPalette = useCallback((cardId: string, cardType: 'landmark' | 'delve') => {
+    if (cardType === 'landmark') {
+      setEditingCard(cardId);
+    } else if (cardType === 'delve') {
+      setEditingCard(cardId);
+    }
+  }, [setEditingCard]);
+
+  // Handle deleting a card from the palette
+  const handleDeleteCardFromPalette = useCallback((cardId: string, cardType: 'landmark' | 'delve') => {
+    if (cardType === 'landmark') {
+      handleDeleteLandmark(cardId);
+    } else if (cardType === 'delve') {
+      handleDeleteDelve(cardId);
+    }
+  }, [handleDeleteLandmark, handleDeleteDelve]);
+
+  // Handle connection mode toggle
+  const handleToggleConnectionMode = useCallback(() => {
+    setConnectionMode(!connectionMode);
+    setSelectedConnectionCard(null);
+  }, [connectionMode]);
+
+  // Handle card connection click
+  const handleCardConnectionClick = useCallback((cardId: string) => {
+    if (!connectionMode) return;
+
+    if (!selectedConnectionCard) {
+      // First card selection
+      setSelectedConnectionCard(cardId);
+    } else if (selectedConnectionCard === cardId) {
+      // Clicking same card - deselect
+      setSelectedConnectionCard(null);
+    } else {
+      // Second card selection - create connection
+      const fromCard = getCardById(selectedConnectionCard);
+      const toCard = getCardById(cardId);
+      
+      if (fromCard && toCard) {
+        // Check if connection already exists
+        const existingConnection = connections.find(
+          conn => 
+            (conn.fromId === selectedConnectionCard && conn.toId === cardId) ||
+            (conn.fromId === cardId && conn.toId === selectedConnectionCard)
+        );
+
+        if (!existingConnection) {
+          // Determine connection type
+          const getConnectionType = (fromType: string, toType: string) => {
+            if (fromType === 'landmark' && toType === 'delve') return 'landmark-to-delve';
+            if (fromType === 'delve' && toType === 'delve') return 'delve-to-delve';
+            if (fromType === 'landmark' && toType === 'landmark') return 'landmark-to-landmark';
+            return 'landmark-to-delve';
+          };
+
+          const connectionType = getConnectionType(fromCard.type, toCard.type);
+          createConnection(selectedConnectionCard, cardId, connectionType);
+          showSuccess('Connection Created', `Connected ${fromCard.name} to ${toCard.name}`);
+        } else {
+          showSuccess('Connection Exists', 'These cards are already connected');
+        }
+      }
+      
+      setSelectedConnectionCard(null);
+    }
+  }, [connectionMode, selectedConnectionCard, connections, createConnection, getCardById, showSuccess]);
+
   // Render card component
-  const renderCard = useCallback((cardId: string, position: HexPosition) => {
+  const renderCard = useCallback((cardId: string, position: Position) => {
     const cardData = getCardById(cardId);
     if (!cardData) return null;
 
@@ -366,20 +549,23 @@ export const DelveMapPage: React.FC = () => {
 
     if (cardData.type === 'landmark') {
       return (
-        <DraggableCard
+        <SimpleCard
           key={cardId}
           cardId={cardId}
           cardType="landmark"
           position={position}
-          hexConfig={hexConfig}
-          onDragStart={() => setDraggedCard(cardId)}
           onDragEnd={handleCardDragEnd}
+          onConnectionClick={handleCardConnectionClick}
           isDragging={isDragging}
           isSelected={isSelected}
-          isOccupied={isHexOccupied}
+          isConnectionMode={connectionMode}
+          isConnectionSelected={selectedConnectionCard === cardId}
           className={isSelected ? 'selected' : ''}
         >
-          <div onClick={() => handleCardSelect(cardId)}>
+          <div onClick={(e) => {
+            e.stopPropagation();
+            handleCardSelect(cardId);
+          }}>
             <LandmarkCard
               landmark={cardData}
               onUpdate={handleUpdateLandmark}
@@ -389,26 +575,29 @@ export const DelveMapPage: React.FC = () => {
               onEditToggle={(editing) => editing ? handleCardEdit(cardId) : setEditingCard(null)}
             />
           </div>
-        </DraggableCard>
+        </SimpleCard>
       );
     }
 
     if (cardData.type === 'delve') {
       return (
-        <DraggableCard
+        <SimpleCard
           key={cardId}
           cardId={cardId}
           cardType="delve"
           position={position}
-          hexConfig={hexConfig}
-          onDragStart={() => setDraggedCard(cardId)}
           onDragEnd={handleCardDragEnd}
+          onConnectionClick={handleCardConnectionClick}
           isDragging={isDragging}
           isSelected={isSelected}
-          isOccupied={isHexOccupied}
+          isConnectionMode={connectionMode}
+          isConnectionSelected={selectedConnectionCard === cardId}
           className={isSelected ? 'selected' : ''}
         >
-          <div onClick={() => handleCardSelect(cardId)}>
+          <div onClick={(e) => {
+            e.stopPropagation();
+            handleCardSelect(cardId);
+          }}>
             <DelveCard
               delve={cardData}
               onUpdate={handleUpdateDelve}
@@ -418,14 +607,14 @@ export const DelveMapPage: React.FC = () => {
               onEditToggle={(editing) => editing ? handleCardEdit(cardId) : setEditingCard(null)}
             />
           </div>
-        </DraggableCard>
+        </SimpleCard>
       );
     }
 
     return null;
   }, [
     getCardById, selectedCard, editingCard, draggedCard, 
-    setDraggedCard, handleCardDragEnd, isHexOccupied, handleCardSelect,
+    handleCardDragEnd, handleCardSelect,
     handleUpdateLandmark, handleDeleteLandmark, handleSaveToLibrary,
     handleCardEdit, setEditingCard, handleUpdateDelve, handleDeleteDelve
   ]);
@@ -460,6 +649,12 @@ export const DelveMapPage: React.FC = () => {
         <div className="delve-map-toolbar">
         <div className="delve-map-toolbar-section">
           <h1 className="delve-map-title">Delve Map</h1>
+          <span className="delve-map-card-count">
+            Cards on map: {placedCards.length}
+          </span>
+          <span className="delve-map-canvas-size">
+            Canvas: 3000×2000px (Scrollable)
+          </span>
         </div>
 
         <div className="delve-map-toolbar-section">
@@ -481,14 +676,6 @@ export const DelveMapPage: React.FC = () => {
 
         <div className="delve-map-toolbar-section">
           <Button
-            variant={showGrid ? 'primary' : 'secondary'}
-            size="small"
-            onClick={() => dispatch({ type: 'TOGGLE_GRID' })}
-            title="Toggle grid visibility"
-          >
-            Grid
-          </Button>
-          <Button
             variant={showConnections ? 'primary' : 'secondary'}
             size="small"
             onClick={() => dispatch({ type: 'TOGGLE_CONNECTIONS' })}
@@ -504,6 +691,54 @@ export const DelveMapPage: React.FC = () => {
           >
             Data
           </Button>
+          <Button
+            variant={showCardPalette ? 'primary' : 'secondary'}
+            size="small"
+            onClick={() => setShowCardPalette(!showCardPalette)}
+            title="Toggle card palette visibility"
+          >
+            {showCardPalette ? 'Hide' : 'Show'} Cards ({landmarks.length + delves.length})
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => {
+              autoSave.saveNow();
+              console.log('Manual save triggered');
+            }}
+            title="Manually trigger auto-save"
+          >
+            Save Now
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => {
+              if (containerRef.current) {
+                containerRef.current.scrollTo({
+                  left: 1500 - containerRef.current.clientWidth / 2,
+                  top: 1000 - containerRef.current.clientHeight / 2,
+                  behavior: 'smooth'
+                });
+              }
+            }}
+            title="Center view on canvas"
+          >
+            Center View
+          </Button>
+          {placedCards.length > 0 && (
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={() => {
+                console.log('Placed cards:', placedCards);
+                alert(`Cards on map: ${placedCards.map(c => `${c.id} at (${c.position.x}, ${c.position.y})`).join(', ')}`);
+              }}
+              title="Show placed card positions"
+            >
+              Debug Cards
+            </Button>
+          )}
           <div className="delve-map-zoom-controls">
             <Button
               variant="secondary"
@@ -532,15 +767,11 @@ export const DelveMapPage: React.FC = () => {
         className="delve-map-container"
         style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
       >
-        <HexGrid
-          width={containerSize.width / zoom}
-          height={containerSize.height / zoom}
-          config={hexConfig}
-          showGrid={showGrid}
-          onHexClick={handleHexClick}
-          onDrop={handleCardDrop}
-          isOccupied={isHexOccupied}
-          className="delve-map-grid"
+        <div 
+          className="delve-map-canvas"
+          onDrop={handleCanvasDrop}
+          onDragOver={handleCanvasDragOver}
+          onClick={handleCanvasClick}
         >
           {/* Render placed cards */}
           {placedCards.map(placedCard => 
@@ -554,8 +785,12 @@ export const DelveMapPage: React.FC = () => {
             delves={delves}
             showConnections={showConnections}
             onToggleConnections={() => dispatch({ type: 'TOGGLE_CONNECTIONS' })}
+            connectionMode={connectionMode}
+            selectedConnectionCard={selectedConnectionCard}
+            onToggleConnectionMode={handleToggleConnectionMode}
+            onConnectionCardClick={handleCardConnectionClick}
           />
-        </HexGrid>
+        </div>
       </div>
 
       {/* Modals */}
@@ -577,6 +812,19 @@ export const DelveMapPage: React.FC = () => {
         isOpen={showPersistenceManager}
         onClose={() => setShowPersistenceManager(false)}
       />
+
+      {/* Card Palette */}
+      {showCardPalette && (
+        <CardPalette
+          landmarks={landmarks}
+          delves={delves}
+          placedCardIds={placedCards.map(card => card.id)}
+          onPlaceCard={handlePlaceCardOnMap}
+          onEditCard={handleEditCardFromPalette}
+          onDeleteCard={handleDeleteCardFromPalette}
+          onSaveToLibrary={handleSaveToLibrary}
+        />
+      )}
 
       {/* Confirmation Dialog */}
       <ConfirmDialog

@@ -28,7 +28,7 @@ export function useConnections() {
 
   const createConnection = (fromId: string, toId: string, type: Connection['type']) => {
     const connection: Connection = {
-      id: crypto.randomUUID(),
+      id: `connection-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       fromId,
       toId,
       type

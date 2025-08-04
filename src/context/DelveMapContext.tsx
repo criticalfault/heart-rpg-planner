@@ -6,7 +6,7 @@ import {
   Monster,
   Connection,
   PlacedCard,
-  HexPosition,
+  Position,
   DelveMap,
   Library
 } from '../types';
@@ -37,7 +37,7 @@ export type DelveMapAction =
   
   // Card positioning actions
   | { type: 'PLACE_CARD'; payload: PlacedCard }
-  | { type: 'MOVE_CARD'; payload: { id: string; position: HexPosition } }
+  | { type: 'MOVE_CARD'; payload: { id: string; position: Position } }
   | { type: 'REMOVE_PLACED_CARD'; payload: string }
   
   // Drag and drop actions
@@ -135,12 +135,22 @@ import { delveMapReducer } from './delveMapReducer';
 export function DelveMapProvider({ children }: DelveMapProviderProps) {
   const [state, dispatch] = useReducer(delveMapReducer, createInitialState());
 
+  // Create a default map if none exists
+  useEffect(() => {
+    if (!state.currentMap) {
+      dispatch({ 
+        type: 'CREATE_NEW_MAP', 
+        payload: { name: 'My Delve Map' } 
+      });
+    }
+  }, [state.currentMap]);
+
   // Auto-save functionality
   const autoSave = useAutoSave(state, {
     enabled: true,
     debounceMs: 1000,
     onSave: (map) => {
-      console.log('Auto-saved map:', map.name);
+      console.log('Auto-saved map:', map.name, 'with', map.landmarks.length, 'landmarks and', map.delves.length, 'delves');
     },
     onError: (error) => {
       console.error('Auto-save error:', error);

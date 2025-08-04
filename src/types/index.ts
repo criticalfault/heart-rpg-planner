@@ -40,6 +40,12 @@ export interface Delve {
 }
 
 // Spatial and Connection Types
+export interface Position {
+  x: number; // pixel coordinate x
+  y: number; // pixel coordinate y
+}
+
+// Legacy hex position (keeping for compatibility)
 export interface HexPosition {
   q: number; // hex coordinate q
   r: number; // hex coordinate r
@@ -55,7 +61,7 @@ export interface Connection {
 export interface PlacedCard {
   id: string;
   type: 'landmark' | 'delve';
-  position: HexPosition;
+  position: Position;
 }
 
 // Map and Library Types

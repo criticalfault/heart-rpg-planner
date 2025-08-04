@@ -6,19 +6,31 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
   switch (action.type) {
     // Landmark actions
     case 'ADD_LANDMARK':
+      const newLandmarks = [...state.landmarks, action.payload];
       return {
         ...state,
-        landmarks: [...state.landmarks, action.payload]
+        landmarks: newLandmarks,
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          landmarks: newLandmarks,
+          updatedAt: new Date()
+        } : null
       };
 
     case 'UPDATE_LANDMARK':
+      const updatedLandmarks = state.landmarks.map(landmark =>
+        landmark.id === action.payload.id
+          ? { ...landmark, ...action.payload.landmark }
+          : landmark
+      );
       return {
         ...state,
-        landmarks: state.landmarks.map(landmark =>
-          landmark.id === action.payload.id
-            ? { ...landmark, ...action.payload.landmark }
-            : landmark
-        )
+        landmarks: updatedLandmarks,
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          landmarks: updatedLandmarks,
+          updatedAt: new Date()
+        } : null
       };
 
     case 'DELETE_LANDMARK':
@@ -35,19 +47,31 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
 
     // Delve actions
     case 'ADD_DELVE':
+      const newDelves = [...state.delves, action.payload];
       return {
         ...state,
-        delves: [...state.delves, action.payload]
+        delves: newDelves,
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          delves: newDelves,
+          updatedAt: new Date()
+        } : null
       };
 
     case 'UPDATE_DELVE':
+      const updatedDelves = state.delves.map(delve =>
+        delve.id === action.payload.id
+          ? { ...delve, ...action.payload.delve }
+          : delve
+      );
       return {
         ...state,
-        delves: state.delves.map(delve =>
-          delve.id === action.payload.id
-            ? { ...delve, ...action.payload.delve }
-            : delve
-        )
+        delves: updatedDelves,
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          delves: updatedDelves,
+          updatedAt: new Date()
+        } : null
       };
 
     case 'DELETE_DELVE':
@@ -128,19 +152,31 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
 
     // Card positioning actions
     case 'PLACE_CARD':
+      const newPlacedCards = [...state.placedCards.filter(card => card.id !== action.payload.id), action.payload];
       return {
         ...state,
-        placedCards: [...state.placedCards.filter(card => card.id !== action.payload.id), action.payload]
+        placedCards: newPlacedCards,
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          placedCards: newPlacedCards,
+          updatedAt: new Date()
+        } : null
       };
 
     case 'MOVE_CARD':
+      const movedPlacedCards = state.placedCards.map(card =>
+        card.id === action.payload.id
+          ? { ...card, position: action.payload.position }
+          : card
+      );
       return {
         ...state,
-        placedCards: state.placedCards.map(card =>
-          card.id === action.payload.id
-            ? { ...card, position: action.payload.position }
-            : card
-        )
+        placedCards: movedPlacedCards,
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          placedCards: movedPlacedCards,
+          updatedAt: new Date()
+        } : null
       };
 
     case 'REMOVE_PLACED_CARD':
@@ -250,7 +286,7 @@ export function delveMapReducer(state: DelveMapState, action: DelveMapAction): D
 
     case 'CREATE_NEW_MAP':
       const newMap: DelveMap = {
-        id: crypto.randomUUID(),
+        id: `map-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: action.payload.name,
         landmarks: [],
         delves: [],

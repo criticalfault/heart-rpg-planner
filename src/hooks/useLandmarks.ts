@@ -1,11 +1,16 @@
 import { useDelveMapContext } from '../context/DelveMapContext';
-import { Landmark, PlacedCard, HexPosition } from '../types';
+import { Landmark, PlacedCard, Position } from '../types';
 
 export function useLandmarks() {
   const { state, dispatch } = useDelveMapContext();
 
-  const addLandmark = (landmark: Landmark) => {
-    dispatch({ type: 'ADD_LANDMARK', payload: landmark });
+  const addLandmark = (landmark: Omit<Landmark, 'id'> | Landmark) => {
+    const landmarkWithId = {
+      ...landmark,
+      id: landmark.id || `landmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    } as Landmark;
+    dispatch({ type: 'ADD_LANDMARK', payload: landmarkWithId });
+    return landmarkWithId;
   };
 
   const updateLandmark = (id: string, landmark: Partial<Landmark>) => {
@@ -16,7 +21,7 @@ export function useLandmarks() {
     dispatch({ type: 'DELETE_LANDMARK', payload: id });
   };
 
-  const placeLandmark = (id: string, position: HexPosition) => {
+  const placeLandmark = (id: string, position: Position) => {
     const placedCard: PlacedCard = {
       id,
       type: 'landmark',
@@ -25,7 +30,7 @@ export function useLandmarks() {
     dispatch({ type: 'PLACE_CARD', payload: placedCard });
   };
 
-  const moveLandmark = (id: string, position: HexPosition) => {
+  const moveLandmark = (id: string, position: Position) => {
     dispatch({ type: 'MOVE_CARD', payload: { id, position } });
   };
 

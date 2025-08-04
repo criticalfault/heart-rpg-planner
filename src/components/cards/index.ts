@@ -15,3 +15,6 @@ export type { DelveFormProps } from './DelveForm';
 
 export { LandmarkForm } from './LandmarkForm';
 export type { LandmarkFormProps } from './LandmarkForm';
+
+export { CardPalette } from './CardPalette';
+export type { CardPaletteProps } from './CardPalette';
