@@ -23,7 +23,6 @@ import '../styles/PersistenceManager.css';
 
 export const DelveMapPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [zoom, setZoom] = useState(1);
   const [showLandmarkForm, setShowLandmarkForm] = useState(false);
   const [showDelveForm, setShowDelveForm] = useState(false);
@@ -51,7 +50,6 @@ export const DelveMapPage: React.FC = () => {
 
   // Context hooks
   const { state, dispatch, autoSave } = useDelveMapContext();
-  const showGrid = state.gridVisible;
   const showConnections = state.showConnections;
   const { loading, error } = state;
 
@@ -802,7 +800,7 @@ export const DelveMapPage: React.FC = () => {
             connectionMode={connectionMode}
             selectedConnectionCard={selectedConnectionCard}
             onToggleConnectionMode={handleToggleConnectionMode}
-            onConnectionCardClick={handleCardConnectionClick}
+
           />
           </div>
         </div>

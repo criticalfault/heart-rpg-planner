@@ -7,7 +7,7 @@ export function useDelves() {
   const addDelve = (delve: Omit<Delve, 'id'> | Delve) => {
     const delveWithId = {
       ...delve,
-      id: delve.id || `delve-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      id: 'id' in delve ? delve.id : `delve-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     } as Delve;
     dispatch({ type: 'ADD_DELVE', payload: delveWithId });
     return delveWithId;

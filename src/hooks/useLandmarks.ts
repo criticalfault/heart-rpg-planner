@@ -7,7 +7,7 @@ export function useLandmarks() {
   const addLandmark = (landmark: Omit<Landmark, 'id'> | Landmark) => {
     const landmarkWithId = {
       ...landmark,
-      id: landmark.id || `landmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      id: 'id' in landmark ? landmark.id : `landmark-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     } as Landmark;
     dispatch({ type: 'ADD_LANDMARK', payload: landmarkWithId });
     return landmarkWithId;

@@ -30,29 +30,10 @@ export function ConnectionManager({
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
 
   // Get card data by ID
-  const getCardById = useCallback((id: string) => {
-    const landmark = landmarks.find(l => l.id === id);
-    if (landmark) return { ...landmark, type: 'landmark' as const };
-    
-    const delve = delves.find(d => d.id === id);
-    if (delve) return { ...delve, type: 'delve' as const };
-    
-    return null;
-  }, [landmarks, delves]);
-
   // Get placed card by ID
   const getPlacedCardById = useCallback((id: string) => {
     return placedCards.find(card => card.id === id);
   }, [placedCards]);
-
-  // Determine connection type based on card types
-  const getConnectionType = (fromType: string, toType: string): Connection['type'] => {
-    if (fromType === 'landmark' && toType === 'delve') return 'landmark-to-delve';
-    if (fromType === 'delve' && toType === 'delve') return 'delve-to-delve';
-    if (fromType === 'landmark' && toType === 'landmark') return 'landmark-to-landmark';
-    // Default fallback
-    return 'landmark-to-delve';
-  };
 
   // Toggle connection mode
   const toggleConnectionMode = () => {
