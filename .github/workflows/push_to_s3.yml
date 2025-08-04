@@ -3,33 +3,49 @@ name: Deploy Website
 on:
   push:
     branches:
-    - main
+      - main
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
       # Clone the repo
       - name: Clone repository
         uses: actions/checkout@v4
-      # Cache node modules
-      - name: Cache node modules
-        uses: actions/cache@v4
+
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: node_modules
-          key: yarn-deps-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            yarn-deps-${{ hashFiles('yarn.lock') }}
-      # Build the static site
+          node-version: '20'
+          cache: 'npm'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Type check
+      - name: Type check
+        run: npm run check
+
+      # Build the static site (Vite outputs to dist/ by default)
       - name: Create static build
-        run: yarn install && DISABLE_ESLINT_PLUGIN=true yarn build
+        run: npm run build
+
+      # Verify build output
+      - name: Verify build output
+        run: |
+          echo "Build completed. Contents of dist directory:"
+          ls -la dist/
+          echo "Total size:"
+          du -sh dist/
+
       # Upload the artifact for other stages to use
       - name: Share artifact in github workflow
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: build
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest
@@ -40,7 +56,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build
-          path: build
+          path: dist
+
       # Setup the AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -48,7 +65,24 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      # Copy the files from /build to s3 bucket
+
+      # Verify deployment files
+      - name: Verify deployment files
+        run: |
+          echo "Files to be deployed:"
+          ls -la dist/
+          echo "Checking for index.html:"
+          if [ -f "dist/index.html" ]; then
+            echo "✓ index.html found"
+          else
+            echo "✗ index.html missing!"
+            exit 1
+          fi
+
+      # Copy the files from /dist to s3 bucket
       - name: Deploy static site to S3 bucket
-        run: aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }} --delete
-        working-directory: build
+        run: |
+          echo "Deploying to S3 bucket: ${{ secrets.S3_BUCKET_NAME }}"
+          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }} --delete --exact-timestamps
+          echo "Deployment completed successfully!"
+        working-directory: dist
