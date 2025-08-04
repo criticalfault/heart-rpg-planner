@@ -96,7 +96,7 @@ export const DragDropExample: React.FC = () => {
                   key={placedCard.id}
                   cardId={placedCard.id}
                   cardType="landmark"
-                  position={placedCard.position}
+                  position={placedCard.position as any}
                   onDragStart={handleDragStart}
                   onDragMove={handleDragMove}
                   onDragEnd={handleDragEnd}
@@ -115,7 +115,7 @@ export const DragDropExample: React.FC = () => {
                   key={placedCard.id}
                   cardId={placedCard.id}
                   cardType="delve"
-                  position={placedCard.position}
+                  position={placedCard.position as any}
                   onDragStart={handleDragStart}
                   onDragMove={handleDragMove}
                   onDragEnd={handleDragEnd}

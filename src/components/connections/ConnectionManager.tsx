@@ -13,7 +13,6 @@ interface ConnectionManagerProps {
   connectionMode?: boolean;
   selectedConnectionCard?: string | null;
   onToggleConnectionMode?: () => void;
-  onConnectionCardClick?: (cardId: string) => void;
 }
 
 export function ConnectionManager({
@@ -24,8 +23,7 @@ export function ConnectionManager({
   onToggleConnections,
   connectionMode = false,
   selectedConnectionCard = null,
-  onToggleConnectionMode,
-  onConnectionCardClick
+  onToggleConnectionMode
 }: ConnectionManagerProps) {
   const { connections, deleteConnection } = useConnections();
   

@@ -57,7 +57,6 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       isOpen={isOpen}
       onClose={onCancel}
       title={title}
-      className="confirm-dialog-modal"
     >
       <div className={`confirm-dialog confirm-dialog--${variant}`}>
         <div className="confirm-dialog-icon">
