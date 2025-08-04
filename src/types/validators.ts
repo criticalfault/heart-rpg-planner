@@ -74,6 +74,10 @@ export function validateDelve(delve: Partial<Delve>): string[] {
     errors.push('Delve resistance must be between 1 and 50');
   }
 
+  if (delve.progress !== undefined && (delve.progress < 0 || (delve.resistance && delve.progress > delve.resistance))) {
+    errors.push('Delve progress must be between 0 and the resistance value');
+  }
+
   if (!delve.domains || delve.domains.length === 0) {
     errors.push('At least one domain must be selected');
   } else {

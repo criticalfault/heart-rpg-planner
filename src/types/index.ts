@@ -33,6 +33,7 @@ export interface Delve {
   id: string;
   name: string;
   resistance: number; // 1-50
+  progress: number; // 0 to resistance (when progress >= resistance, delve is complete)
   domains: Domain[];
   events: string[];
   resources: string[];

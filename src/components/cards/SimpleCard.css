@@ -55,7 +55,7 @@
   right: 4px;
   width: 28px;
   height: 28px;
-  background: rgba(79, 70, 229, 0.9); /* Indigo color matching design */
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -66,8 +66,8 @@
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
   z-index: 15;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--color-surface);
+  box-shadow: var(--shadow-md);
 }
 
 .simple-card--connection-mode .simple-card-connection-point {
@@ -75,14 +75,14 @@
 }
 
 .simple-card--connection-selected .simple-card-connection-point {
-  background: rgba(5, 150, 105, 0.9); /* Green color matching design */
+  background: linear-gradient(135deg, var(--color-success-600) 0%, var(--color-success-700) 100%);
   transform: scale(1.2);
   animation: pulse 1s ease-in-out infinite;
 }
 
 .simple-card-connection-point:hover {
   transform: scale(1.1);
-  background: rgba(79, 70, 229, 1); /* Indigo color matching design */
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
 }
 
 @keyframes pulse {
@@ -109,17 +109,17 @@
 }
 
 .simple-card--selected {
-  box-shadow: 0 0 0 4px #007bff, 0 0 20px rgba(0, 123, 255, 0.5);
+  box-shadow: 0 0 0 4px var(--color-primary-500), 0 0 20px rgba(79, 70, 229, 0.5);
   z-index: 100;
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 0 4px #007bff, 0 0 20px rgba(0, 123, 255, 0.5);
+    box-shadow: 0 0 0 4px var(--color-primary-500), 0 0 20px rgba(79, 70, 229, 0.5);
   }
   50% {
-    box-shadow: 0 0 0 6px #007bff, 0 0 30px rgba(0, 123, 255, 0.8);
+    box-shadow: 0 0 0 6px var(--color-primary-400), 0 0 30px rgba(79, 70, 229, 0.8);
   }
 }
 

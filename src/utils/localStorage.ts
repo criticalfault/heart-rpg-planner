@@ -1,9 +1,19 @@
-import { Library, DelveMap } from '../types';
+import { Library, DelveMap, Delve } from '../types';
 
 const LIBRARY_STORAGE_KEY = 'heart-rpg-library';
 const MAPS_STORAGE_KEY = 'heart-rpg-maps';
 const CURRENT_MAP_KEY = 'heart-rpg-current-map';
 const AUTO_SAVE_KEY = 'heart-rpg-auto-save';
+
+/**
+ * Migration function to add progress field to existing delves
+ */
+function migrateDelve(delve: any): Delve {
+  if (typeof delve.progress === 'undefined') {
+    return { ...delve, progress: 0 };
+  }
+  return delve;
+}
 
 /**
  * Library localStorage utilities

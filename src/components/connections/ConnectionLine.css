@@ -21,15 +21,15 @@
 
 /* Connection type styles */
 .connection-line--landmark-to-delve {
-  stroke: #4f46e5; /* Indigo for landmark to delve */
+  stroke: var(--color-connection-landmark-delve);
 }
 
 .connection-line--delve-to-delve {
-  stroke: #dc2626; /* Red for delve to delve */
+  stroke: var(--color-connection-delve-delve);
 }
 
 .connection-line--landmark-to-landmark {
-  stroke: #059669; /* Green for landmark to landmark */
+  stroke: var(--color-connection-landmark-landmark);
   stroke-dasharray: 5,5;
 }
 
@@ -39,15 +39,15 @@
 }
 
 .connection-arrow.connection-line--landmark-to-delve {
-  fill: #4f46e5;
+  fill: var(--color-connection-landmark-delve);
 }
 
 .connection-arrow.connection-line--delve-to-delve {
-  fill: #dc2626;
+  fill: var(--color-connection-delve-delve);
 }
 
 .connection-arrow.connection-line--landmark-to-landmark {
-  fill: #059669;
+  fill: var(--color-connection-landmark-landmark);
 }
 
 .connection-delete-button {

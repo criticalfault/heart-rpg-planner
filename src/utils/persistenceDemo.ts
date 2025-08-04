@@ -29,6 +29,7 @@ const sampleDelve: Delve = {
   id: 'demo-delve-1',
   name: 'The Bone Gardens',
   resistance: 30,
+  progress: 0,
   domains: ['Cursed', 'Desolate'],
   events: ['Skeleton ambush', 'Bone storm'],
   resources: ['Ancient bones', 'Cursed soil'],

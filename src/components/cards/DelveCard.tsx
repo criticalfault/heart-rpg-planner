@@ -84,6 +84,13 @@ const DelveCardComponent: React.FC<DelveCardProps> = ({
     }
   }, [handleFieldChange]);
 
+  const handleProgressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value)) {
+      handleFieldChange('progress', Math.max(0, Math.min(value, editData.resistance)));
+    }
+  }, [handleFieldChange, editData.resistance]);
+
   // Memoize CSS classes and monster rendering for performance
   const cardClasses = useMemo(() => [
     'delve-card',
@@ -183,6 +190,16 @@ const DelveCardComponent: React.FC<DelveCardProps> = ({
             required
           />
 
+          <Input
+            label="Progress"
+            type="number"
+            min="0"
+            max={editData.resistance.toString()}
+            value={editData.progress.toString()}
+            onChange={handleProgressChange}
+            helperText={`Progress toward completion (0-${editData.resistance})`}
+          />
+
           <DomainSelector
             label="Domains"
             selectedDomains={editData.domains}
@@ -257,6 +274,22 @@ const DelveCardComponent: React.FC<DelveCardProps> = ({
         </div>
 
         <div className="delve-card-field">
+          <span className="delve-card-field-label">Progress:</span>
+          <div className="delve-card-progress">
+            <div className="delve-card-progress-bar">
+              <div 
+                className={`delve-card-progress-fill ${delve.progress >= delve.resistance ? 'delve-card-progress-complete' : ''}`}
+                style={{ width: `${Math.min((delve.progress / delve.resistance) * 100, 100)}%` }}
+              />
+            </div>
+            <span className="delve-card-progress-text">
+              {delve.progress}/{delve.resistance}
+              {delve.progress >= delve.resistance && ' ✓ Complete'}
+            </span>
+          </div>
+        </div>
+
+        <div className="delve-card-field">
           <span className="delve-card-field-label">Domains:</span>
           <div className="delve-card-domains">
             {delve.domains.map(domain => (
@@ -326,6 +359,7 @@ export const DelveCard = memo(DelveCardComponent, (prevProps, nextProps) => {
   if (prevProps.delve.id !== nextProps.delve.id) return false;
   if (prevProps.delve.name !== nextProps.delve.name) return false;
   if (prevProps.delve.resistance !== nextProps.delve.resistance) return false;
+  if (prevProps.delve.progress !== nextProps.delve.progress) return false;
   if (JSON.stringify(prevProps.delve.domains) !== JSON.stringify(nextProps.delve.domains)) return false;
   if (JSON.stringify(prevProps.delve.events) !== JSON.stringify(nextProps.delve.events)) return false;
   if (JSON.stringify(prevProps.delve.resources) !== JSON.stringify(nextProps.delve.resources)) return false;

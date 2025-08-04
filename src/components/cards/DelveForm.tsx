@@ -19,6 +19,7 @@ export interface DelveFormProps {
 const createEmptyDelve = (): Omit<Delve, 'id'> => ({
   name: '',
   resistance: 1,
+  progress: 0,
   domains: [],
   events: [],
   resources: [],
@@ -67,6 +68,13 @@ export const DelveForm: React.FC<DelveFormProps> = ({
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
       handleFieldChange('resistance', value);
+    }
+  };
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value)) {
+      handleFieldChange('progress', Math.max(0, Math.min(value, formData.resistance)));
     }
   };
 
@@ -146,6 +154,18 @@ export const DelveForm: React.FC<DelveFormProps> = ({
             disabled={isSubmitting}
             error={validationErrors.find(e => e.includes('resistance')) ? 'Resistance must be between 1 and 50' : undefined}
             helperText="Difficulty rating from 1 to 50"
+          />
+
+          <Input
+            label="Progress"
+            type="number"
+            min="0"
+            max={formData.resistance.toString()}
+            value={formData.progress.toString()}
+            onChange={handleProgressChange}
+            placeholder="0"
+            disabled={isSubmitting}
+            helperText={`Progress toward completion (0-${formData.resistance})`}
           />
 
           <DomainSelector
